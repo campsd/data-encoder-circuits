@@ -1,10 +1,20 @@
 #!/usr/bin/env python
+'''
+Unit test
+  pytest aa1.py::test_end_to_end
+'''
+
 # -*- coding: utf-8 -*-
+import sys,os
+sys.path.append(os.path.abspath("/daan_qcrank1"))
 from datacircuits import qcrank
 import numpy as np
-import qiskit as qk
 
-simulator = qk.Aer.get_backend('aer_simulator')
+from qiskit_aer import AerSimulator
+
+#import qiskit as qk
+
+simulator = AerSimulator()
 
 
 def test_end_to_end():
@@ -31,7 +41,7 @@ def test_end_to_end():
     svecs = [r.get_statevector(c) for r, c in zip(results, data_circs)]
     angles_rec = param_qcrank.decoder.angles_from_statevec(svecs)
     data_rec = np.ravel(
-        param_qcrank.decoder.angles_to_data(angles_rec, max_val=max_val)
+        param_qcrank.decoder.angles_to_idata(angles_rec, max_val=max_val)
     )
     np.testing.assert_allclose(data_rec, np.ravel(data), rtol=1e-12)
 
@@ -51,7 +61,7 @@ def test_end_to_end():
     svecs = [r.get_statevector(c) for r, c in zip(results, data_circs)]
     angles_rec = param_qcrank.decoder.angles_from_statevec(svecs)
     data_rec = np.ravel(
-        param_qcrank.decoder.angles_to_data(angles_rec, max_val=max_val)
+        param_qcrank.decoder.angles_to_idata(angles_rec, max_val=max_val)
     )
     np.testing.assert_allclose(data_rec, np.ravel(data), rtol=1e-12)
 
@@ -71,7 +81,7 @@ def test_end_to_end():
     yields = [r.get_counts(c) for r, c in zip(results, data_circs)]
     angles_rec = param_qcrank.decoder.angles_from_yields(yields)
     data_rec = np.ravel(
-        param_qcrank.decoder.angles_to_data(angles_rec, max_val=max_val)
+        param_qcrank.decoder.angles_to_idata(angles_rec, max_val=max_val)
     )
     np.testing.assert_allclose(data_rec, np.ravel(data), rtol=1e-12)
 
@@ -91,7 +101,7 @@ def test_end_to_end():
     yields = [r.get_counts(c) for r, c in zip(results, data_circs)]
     angles_rec = param_qcrank.decoder.angles_from_yields(yields)
     data_rec = np.ravel(
-        param_qcrank.decoder.angles_to_data(angles_rec, max_val=max_val)
+        param_qcrank.decoder.angles_to_idata(angles_rec, max_val=max_val)
     )
     np.testing.assert_allclose(data_rec, np.ravel(data), rtol=1e-12)
 

@@ -4,7 +4,7 @@
 from ._version import __version__
 from . import frqi
 from . import qcrank
-from ._util import rescale_data_to_angles, rescale_angles_to_data
+from ._util import rescale_data_to_angles, rescale_angles_to_fdata
 from ._util_img import (
     convert_max_val,
     l1_distance,
@@ -14,7 +14,7 @@ from ._util_img import (
 
 __all__ = [
     'rescale_data_to_angles',
-    'rescale_angles_to_data',
+    'rescale_angles_to_fdata',
     'frqi',
     'qcrank',
     'convert_max_val',

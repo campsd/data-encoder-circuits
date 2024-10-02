@@ -249,23 +249,21 @@ def rescale_data_to_angles(data, max_val=256, flatten_and_pad=False):
         )
     return angles
 
-
-def rescale_angles_to_data(angles, max_val=256):
+def rescale_angles_to_fdata(angles, max_val=256):
     ''' Converts the angles back to discretized data according to a linear
     relation.
-
+        
     Args:
         angles:
             measured/computed angles
-        max_val: int (256)
-            maximum intensity value (default: 256 for 8bit). The maximum
-            intensity is non-inclusive, i.e., intensities in
-            [0, ..., max_val - 1] are expected.
-    '''
+        max_val: float (256)
+            maximum intensity value can be any positive real number.
+            intensities in [0, max_val) are expected.
+    ''' 
     pi = np.pi
     sc = max_val / pi
-    return np.round((angles * sc))
-
+    return angles * sc
+      
 
 def convert_shots_to_pdf(counts, normalize=True):
     '''Converts the counts as returned by Qiskit to a probability density

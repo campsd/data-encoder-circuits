@@ -11,7 +11,7 @@ from ._util import (
     gray_permutation,
     convert_shots_to_pdf,
     rescale_data_to_angles,
-    rescale_angles_to_data,
+    rescale_angles_to_fdata,
     cnot_permutation
 )
 
@@ -138,7 +138,7 @@ class FRQI:
     def generate_circuits(self):
         circs = []
         for i in range(self.angles.shape[1]):
-            circ = self._pfrqi.circuit.bind_parameters(
+            circ = self._pfrqi.circuit.assign_parameters(
                     {self._pfrqi.parameters:
                      self.angles_frqi[:, i]}
                 )
@@ -189,7 +189,7 @@ class _DecoderFRQI(ABC):
 
     @staticmethod
     def angles_to_data(angles, max_val=256):
-        return rescale_angles_to_data(angles, max_val=max_val)
+        return np.round(rescale_angles_to_fdata(angles, max_val=max_val))
 
 
 class QKAtan2DecoderFRQI(_DecoderFRQI):

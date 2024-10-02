@@ -11,7 +11,7 @@ from ._util import (
     sfwht,
     convert_shots_to_pdf,
     marginal_distribution,
-    rescale_angles_to_data,
+    rescale_angles_to_fdata,
     rescale_data_to_angles,
     cnot_permutation
 )
@@ -33,8 +33,12 @@ class _DecoderQCRANK(ABC):
         pass
 
     @staticmethod
-    def angles_to_data(angles, max_val=256):
-        return rescale_angles_to_data(angles, max_val=max_val)
+    def angles_to_idata(angles, max_val=256):
+        return np.round(rescale_angles_to_fdata(angles, max_val=max_val))
+
+    @staticmethod
+    def angles_to_fdata(angles, max_val=256):
+        return rescale_angles_to_fdata(angles, max_val=max_val)
 
     def dist_to_marginals(self, dist):
         out = np.empty((2**(self.nq_addr+1), self.nq_data, *dist.shape[1:]))
@@ -253,7 +257,7 @@ class ParametrizedQCRANK:
             for i in range(self.nq_data):
                 my_dict[self.parameters[i]] = \
                     self.angles_qcrank[:, i, j]
-            circ = self.circuit.bind_parameters(my_dict)
+            circ = self.circuit.assign_parameters(my_dict)
             circs.append(circ)
         return circs
 
