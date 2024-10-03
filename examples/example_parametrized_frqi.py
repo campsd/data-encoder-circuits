@@ -3,11 +3,6 @@
 '''
 Example script that runs randomly generated 8 pixel images on the simulator.
 '''
-import sys,os
-#sys.path.append('..')  # I left the Python path hack here for now
-#import qpixl
-
-sys.path.append(os.path.abspath("/daan_qcrank1"))
 from datacircuits import frqi
 
 import numpy as np
