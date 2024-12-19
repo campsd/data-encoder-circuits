@@ -5,7 +5,7 @@ import sys,os
 
 #sys.path.append(os.path.abspath("/daan_qcrank/py"))
 #from qpixl import qcrank
-sys.path.append(os.path.abspath("/daan_qcrank1"))
+sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits import qcrank
 
 
