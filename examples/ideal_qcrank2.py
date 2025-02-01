@@ -26,7 +26,8 @@ def get_parser():
     # Qiskit:
     parser.add_argument('-n','--numShots', default=800, type=int, help='num of shots')
     parser.add_argument( "-E","--execDecoding", action='store_true', default=False, help="do not decode job output")
-    parser.add_argument( "-e","--exportQPY", action='store_true', default=False, help="exprort parametrized circuit as QPY file")
+    parser.add_argument( "-e1","--exportQPY", action='store_true', default=False, help="exprort parametrized circuit as QPY file")
+    parser.add_argument( "-e2","--exportQASM", action='store_true', default=False, help="exprort parametrized circuit as QASM file")
  
   
     args = parser.parse_args()
@@ -93,21 +94,34 @@ if __name__ == "__main__":
             qpy.dump(qc, fd)
         print('\nSaved circ1:',circF)
         exit(0)
+
+    if args.exportQASM:
+        import qiskit.qasm3
+        circF='./qcrank_nqa%d_nqd%d.qasm'%(nq_addr,nq_data)
+        with open(circF, 'w') as fd:
+            qiskit.qasm3.dump(qc, fd)
+        print('\nSaved circ1:',circF)
+
+        # Load the circuit back from the QASM file
+        with open(circF, 'r') as file:
+            qasm_str = file.read()
+            reg_qc = qiskit.qasm3.loads(qasm_str)
+        print(reg_qc)
+        exit(0)
         
     # bind the data
     param_qcrank.bind_data(data, max_val=max_val)
     # generate the instantiated circuits
-    data_circs = param_qcrank.instantiate_circuits()
+    circs = param_qcrank.instantiate_circuits()
     if args.verb>2 or nq_addr<4:
         print(f'.... FIRST INSTANTIATED CIRCUIT .............. of {n_img}')
-        print(data_circs[0].draw())
+        print(circs[0].draw())
 
-    
     T0=time()    
     # run the simulation for all images
     print('M: job nqTot=%d started ...'%nqTot)
-    results = [backend.run(c, shots=shots).result() for c in data_circs]
-    counts = [r.get_counts(c) for r, c in zip(results, data_circs)]
+    results = [backend.run(c, shots=shots).result() for c in circs]
+    counts = [r.get_counts(c) for r, c in zip(results, circs)]
     elaT=time()-T0
     print('M: QCrank simu nqTot=%d  shots=%d  nImg=%d  ended elaT=%.1f sec'%(nqTot,shots,n_img,elaT))
 
