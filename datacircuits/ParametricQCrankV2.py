@@ -3,6 +3,35 @@ This implementation of QCrank
 - can choose CX or CZ entangling basis
 - uses  EVEN  ( expectation value encoding) for input in range [-1,1]
 
+CX-implementation
+              ░ ┌───────────┐     ┌───┐┌───────────┐     ┌───┐┌───────────┐     ┌───┐┌───────────┐     ┌───┐ ░ ┌─┐         
+   q_0: ──────░─┤ Ry(p1[0]) ├─────┤ X ├┤ Ry(p1[1]) ├─────┤ X ├┤ Ry(p1[2]) ├─────┤ X ├┤ Ry(p1[3]) ├─────┤ X ├─░─┤M├─────────
+              ░ ├───────────┤┌───┐└─┬─┘├───────────┤┌───┐└─┬─┘├───────────┤┌───┐└─┬─┘├───────────┤┌───┐└─┬─┘ ░ └╥┘┌─┐      
+   q_1: ──────░─┤ Ry(p0[0]) ├┤ X ├──┼──┤ Ry(p0[1]) ├┤ X ├──┼──┤ Ry(p0[2]) ├┤ X ├──┼──┤ Ry(p0[3]) ├┤ X ├──┼───░──╫─┤M├──────
+        ┌───┐ ░ └───────────┘└─┬─┘  │  └───────────┘└─┬─┘  │  └───────────┘└─┬─┘  │  └───────────┘└─┬─┘  │   ░  ║ └╥┘┌─┐   
+   q_2: ┤ H ├─░────────────────■────┼─────────────────┼────■─────────────────■────┼─────────────────┼────■───░──╫──╫─┤M├───
+        ├───┤ ░                     │                 │                           │                 │        ░  ║  ║ └╥┘┌─┐
+   q_3: ┤ H ├─░─────────────────────■─────────────────■───────────────────────────■─────────────────■────────░──╫──╫──╫─┤M├
+        └───┘ ░                                                                                              ░  ║  ║  ║ └╥┘
+meas: 4/════════════════════════════════════════════════════════════════════════════════════════════════════════╩══╩══╩══╩═
+                                                                                                                0  1  2  3 
+
+
+
+CZ-implmentation
+              ░ ┌───┐┌────────────┐     ┌───┐┌────────────┐     ┌───┐┌────────────┐     ┌───┐┌────────────┐     ┌───┐┌───┐ ░ ┌─┐         
+   q_0: ──────░─┤ H ├┤ Ry(-p1[0]) ├─────┤ X ├┤ Ry(-p1[1]) ├─────┤ X ├┤ Ry(-p1[2]) ├─────┤ X ├┤ Ry(-p1[3]) ├─────┤ X ├┤ H ├─░─┤M├─────────
+              ░ ├───┤├────────────┤┌───┐└─┬─┘├────────────┤┌───┐└─┬─┘├────────────┤┌───┐└─┬─┘├────────────┤┌───┐└─┬─┘├───┤ ░ └╥┘┌─┐      
+   q_1: ──────░─┤ H ├┤ Ry(-p0[0]) ├┤ X ├──┼──┤ Ry(-p0[1]) ├┤ X ├──┼──┤ Ry(-p0[2]) ├┤ X ├──┼──┤ Ry(-p0[3]) ├┤ X ├──┼──┤ H ├─░──╫─┤M├──────
+        ┌───┐ ░ └───┘└────────────┘└─┬─┘  │  └────────────┘└─┬─┘  │  └────────────┘└─┬─┘  │  └────────────┘└─┬─┘  │  └───┘ ░  ║ └╥┘┌─┐   
+   q_2: ┤ H ├─░──────────────────────■────┼──────────────────┼────■──────────────────■────┼──────────────────┼────■────────░──╫──╫─┤M├───
+        ├───┤ ░                           │                  │                            │                  │             ░  ║  ║ └╥┘┌─┐
+   q_3: ┤ H ├─░───────────────────────────■──────────────────■────────────────────────────■──────────────────■─────────────░──╫──╫──╫─┤M├
+        └───┘ ░                                                                                                            ░  ║  ║  ║ └╥┘
+meas: 4/══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╩══╩══╩══╩═
+                                                                                                                              0  1  2  3 
+
+
 '''
 
 import sys,os
@@ -16,7 +45,7 @@ sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits import qcrank
     
 #...!...!....................
-def marginalize_qcrank_EV(  addrBitsL, probsB,dataBit):
+def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
     #print('MQCEV inp bits:',dataBit,addrBitsL)
     # ... marginal distributions for 2 data qubits, for 1 circuit
     assert dataBit not in addrBitsL
@@ -24,10 +53,11 @@ def marginalize_qcrank_EV(  addrBitsL, probsB,dataBit):
     #print('MQCEV bitL:',bitL)
     probs=marginal_distribution(probsB,bitL)
     
-    #.... comput probabilities for each address
+    #.... for each address comput probabilities,stat error, EV, EV_err 
     nq_addr=len(addrBitsL)
     seq_len=1<<nq_addr
-    mdata=np.zeros(seq_len)
+    prob=np.zeros(seq_len)
+    probEr=np.zeros(seq_len)
     fstr='0'+str(nq_addr)+'b' 
     for j in range(seq_len):
         mbit=format(j,fstr)
@@ -37,8 +67,11 @@ def marginalize_qcrank_EV(  addrBitsL, probsB,dataBit):
         m01=m0+m1
         #print(j,mbit,'sum=',m01)
         p=m1/m01 if m01>0 else 0
-        mdata[j]=p
-    return 1-2*mdata
+        pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01
+        prob[j]=p
+        probEr[j]=pErr
+        
+    return 1-2*prob, 2*probEr
   
 
 #...!...!....................
@@ -70,7 +103,11 @@ class ParametricQCrankV2():
         self.nq_data = nq_data
         self.num_addr = 2 ** nq_addr
 
-        #...!...!....................
+        # Create a parameter vector for each data qubit, each with 2**nq_addr parameters
+        self.parV = [
+            ParameterVector(f'p{i}', 2 ** nq_addr) for i in range(nq_data)
+        ]
+        
         # Generate circuit
         self.circuit = QuantumCircuit(nq_addr + nq_data)
 
@@ -80,37 +117,28 @@ class ParametricQCrankV2():
         if barrier:
             self.circuit.barrier()
 
-        # Create a parameter vector for each data qubit, each with 2**nq_addr parameters
-        self.parV = [
-            ParameterVector(f'p{i}', 2 ** nq_addr) for i in range(nq_data)
-        ]
-
+        qdl=nq_addr; qdr=nq_addr+nq_data  # precompute range of address qubits
+        
+        if useCZ:  # will use CZ entangling gates
+            for jd in range(qdl,qdr):
+                self.circuit.h( jd)
+                       
         # Add nested and shifted uniform rotations along with controlled-X (CX) gates
         for ja in range(self.num_addr):
-            for jd in range(nq_data):
-                pars=self.parV[jd][ja]
-                qd=nq_addr + jd
+           
+            for jd in range(qdl,qdr):
+                pars=self.parV[jd-nq_addr][ja]
+                if useCZ: pars=-pars
+                self.circuit.ry(pars, jd)
+                        
+            for jd in range(qdl,qdr):
+                qctr = qcrank.compute_control(ja, self.nq_addr, shift=jd % nq_addr)
+                self.circuit.cx(qctr, jd)
 
-                # there are 3 cases
-                if useCZ:  # will use CZ entangling gates
-                    if  ja==0:
-                        self.circuit.ry(pars, qd)
-                        self.circuit.h(qd)
-                    else:
-                        self.circuit.ry(-pars, qd)
-                else:  # will use CX entangling gates
-                    self.circuit.ry(pars, qd)
-
-            for jd in range(nq_data):
-                qctr = qcrank.compute_control(ja, self.nq_addr, shift=jd % self.nq_addr)
-                qd=nq_addr + jd
-                if useCZ:
-                    self.circuit.cz(qctr, qd)
-                    if  ja==self.num_addr-1:  self.circuit.h(qd)
-
-                else:
-                    self.circuit.cx(qctr, qd)
-
+        if useCZ:  # will use CZ entangling gates
+            for jd in range(qdl,qdr):
+                self.circuit.h( jd)
+  
         # Reverse qubit order to match Qiskit's little-endian convention
         self.circuit = self.circuit.reverse_bits()
 
@@ -187,14 +215,16 @@ class ParametricQCrankV2():
         nCirc = len(countsL)
 
         rec_udata = np.zeros((self.num_addr, self.nq_data, nCirc))  # To match input indexing
-
+        rec_udataErr = np.zeros_like(rec_udata)
+    
         for ic in range(nCirc):
             counts = countsL[ic]
             for jd in range(self.nq_data):
                 ibit = self.nq_data - 1 - jd
-                valV = marginalize_qcrank_EV(addrBitsL, counts, dataBit=ibit)
+                valV,valErV = marginalize_qcrank_EV(addrBitsL, counts, dataBit=ibit)
                 rec_udata[:, jd, ic] = valV
+                rec_udataErr[:, jd, ic] = valErV
 
-        return rec_udata
+        return rec_udata,rec_udataErr
 
 

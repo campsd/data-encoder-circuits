@@ -64,8 +64,9 @@ def get_parser():
 #=================================
 #=================================
 if __name__ == "__main__":
-    args=get_parser() 
-    
+    args=get_parser()         
+    np.set_printoptions(precision=3)
+
     # set up example parameters ---------------------------------------------------
     n_img = args.numImages             
     nq_addr, nq_data = args.numQubits  
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     backend = AerSimulator()
 
     # set up experiments
-    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ,measure=True )
+    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ,measure=True,barrier=True )
     
     qc=qcrankObj.circuit
     cxDepth=qc.depth(filter_function=lambda x: x.operation.name == 'cx')
@@ -141,20 +142,18 @@ if __name__ == "__main__":
 
     #print('M:counts',countsL)
     # decode results
-    data_rec =  qcrankObj.reco_from_yields(countsL)
+    data_rec,data_recErr =  qcrankObj.reco_from_yields(countsL)
     #print('inp data;',data_inp.T)
     #print('rec data;',data_rec.T)
    
-    if args.verb>=3:
-        print(f'.... ORIGINAL DATA .............. n_img={n_img}')
+    if args.verb>=3 :
         for i in range(n_img):
-            print(f'org img={i}\n', data_inp[..., i])
-        print(f'.... RECONSTRUCTED DATA ..........  n_img={n_img}')
-        for i in range(n_img):
-            print(f'reco img={i}\n', data_rec[..., i])
-        print('.... DIFFERENCE ..............')
-        for i in range(n_img):
-            print(f'diff img={i}\n', data_inp[..., i] - data_rec[..., i])
+            print(f'\n.... ORIGINAL DATA .............. img={i}')            
+            print(f'org img={i}\n', data_inp[..., i].T)            
+            print(f'reco img={i}\n', data_rec[..., i].T)
+            print(f'diff img={i}\n', (data_inp[..., i] - data_rec[..., i]).T)
+            print('stat err img=%d   %d shots/addr\n'%(i,args.numShots/num_addr), (data_inp[..., i] - data_rec[..., i]).T)
+            if i>2: break
 
     print('....L2 distance = sqrt( sum (res^2)), shots=%d  ndf=%d '%(args.numShots ,num_addr))
     for i in range(n_img):

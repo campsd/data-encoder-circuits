@@ -51,3 +51,5 @@ docs/_build/
 old
 *.qasm
 *.qpy
+*~
+
