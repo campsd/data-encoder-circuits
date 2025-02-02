@@ -17,6 +17,7 @@ __all__ = [
     'rescale_angles_to_fdata',
     'frqi',
     'qcrank',
+    'ParametricQCrankV2',
     'convert_max_val',
     'l1_distance',
     'l2_distance',

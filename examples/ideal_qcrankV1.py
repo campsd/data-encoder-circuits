@@ -3,8 +3,6 @@
 '''Example script that runs QCRANK on the simulator.'''
 import sys,os
 
-#sys.path.append(os.path.abspath("/daan_qcrank/py"))
-#from qpixl import qcrank
 sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits import qcrank
 
@@ -68,7 +66,7 @@ if __name__ == "__main__":
     backend = AerSimulator()
 
     # set up experiments
-    param_qcrank = qcrank.ParametrizedQCRANK(
+    qcrankObj = qcrank.ParametrizedQCRANK(
         nq_addr,
         nq_data,
         qcrank.QKAtan2DecoderQCRANK,
@@ -78,14 +76,14 @@ if __name__ == "__main__":
         reverse_bits=True,   # to match Qiskit littleEndian
         parallel= qcrank_opt
     )
-    qc=param_qcrank.circuit
+    qc=qcrankObj.circuit
     cxDepth=qc.depth(filter_function=lambda x: x.operation.name == 'cx')
     print(f'.... PARAMETRIZED CIRCUIT .............. n_pix={n_pix},  qcrank_opt={qcrank_opt}, cx-depth={cxDepth}')
     nqTot=qc.num_qubits
     print(' gates count:', qc.count_ops())
 
     if args.verb>2 or nq_addr<4:
-        print(param_qcrank.circuit.draw())
+        print(qcrankObj.circuit.draw())
 
     if args.exportQPY:
         from qiskit import qpy
@@ -110,9 +108,9 @@ if __name__ == "__main__":
         exit(0)
         
     # bind the data
-    param_qcrank.bind_data(data, max_val=max_val)
+    qcrankObj.bind_data(data, max_val=max_val)
     # generate the instantiated circuits
-    circs = param_qcrank.instantiate_circuits()
+    circs = qcrankObj.instantiate_circuits()
     if args.verb>2 or nq_addr<4:
         print(f'.... FIRST INSTANTIATED CIRCUIT .............. of {n_img}')
         print(circs[0].draw())
@@ -130,11 +128,11 @@ if __name__ == "__main__":
         exit(0)
 
     # decode results
-    angles_rec =  param_qcrank.decoder.angles_from_yields(counts)  
+    angles_rec =  qcrankObj.decoder.angles_from_yields(counts)  
 
     print('\nM: minAngle=%.3f, maxAngle=%.3f  should be in range [0,pi]\n'%(np.min(angles_rec),np.max(angles_rec)))
 
-    data_rec = param_qcrank.decoder.angles_to_fdata(angles_rec, max_val=max_val)
+    data_rec = qcrankObj.decoder.angles_to_fdata(angles_rec, max_val=max_val)
 
     if args.verb>2:
         print(f'.... ORIGINAL DATA .............. n_img={n_img}')
