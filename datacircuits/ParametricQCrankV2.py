@@ -103,13 +103,15 @@ class ParametricQCrankV2():
         self.nq_data = nq_data
         self.num_addr = 2 ** nq_addr
 
+        
         # Create a parameter vector for each data qubit, each with 2**nq_addr parameters
         self.parV = [
             ParameterVector(f'p{i}', 2 ** nq_addr) for i in range(nq_data)
         ]
         
         # Generate circuit
-        self.circuit = QuantumCircuit(nq_addr + nq_data)
+        num_q=nq_addr + nq_data
+        self.circuit = QuantumCircuit(num_q)
 
         # Apply Hadamard gates (diffusion) to all address qubits
         for i in range(nq_addr):
@@ -128,20 +130,23 @@ class ParametricQCrankV2():
            
             for jd in range(qdl,qdr):
                 pars=self.parV[jd-nq_addr][ja]
-                if useCZ: pars=-pars
+                if useCZ: pars=-pars  # not needed ???
                 self.circuit.ry(pars, jd)
                         
             for jd in range(qdl,qdr):
                 qctr = qcrank.compute_control(ja, self.nq_addr, shift=jd % nq_addr)
-                self.circuit.cx(qctr, jd)
+                if useCZ:
+                    self.circuit.cz(qctr, jd)
+                else:
+                    self.circuit.cx(qctr, jd)
 
-        if useCZ:  # will use CZ entangling gates
-            for jd in range(qdl,qdr):
-                self.circuit.h( jd)
-  
+        if useCZ :  # will use CZ entangling gates
+            for jd in range(qdl,qdr):                
+                self.circuit.h( jd)                
+                
         # Reverse qubit order to match Qiskit's little-endian convention
         self.circuit = self.circuit.reverse_bits()
-
+        
         if measure:
             self.circuit.measure_all()
             
