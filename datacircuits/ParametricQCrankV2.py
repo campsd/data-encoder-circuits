@@ -4,32 +4,31 @@ This implementation of QCrank
 - uses  EVEN  ( expectation value encoding) for input in range [-1,1]
 
 CX-implementation
-              ░ ┌───────────┐     ┌───┐┌───────────┐     ┌───┐┌───────────┐     ┌───┐┌───────────┐     ┌───┐ ░ ┌─┐         
-   q_0: ──────░─┤ Ry(p1[0]) ├─────┤ X ├┤ Ry(p1[1]) ├─────┤ X ├┤ Ry(p1[2]) ├─────┤ X ├┤ Ry(p1[3]) ├─────┤ X ├─░─┤M├─────────
-              ░ ├───────────┤┌───┐└─┬─┘├───────────┤┌───┐└─┬─┘├───────────┤┌───┐└─┬─┘├───────────┤┌───┐└─┬─┘ ░ └╥┘┌─┐      
-   q_1: ──────░─┤ Ry(p0[0]) ├┤ X ├──┼──┤ Ry(p0[1]) ├┤ X ├──┼──┤ Ry(p0[2]) ├┤ X ├──┼──┤ Ry(p0[3]) ├┤ X ├──┼───░──╫─┤M├──────
-        ┌───┐ ░ └───────────┘└─┬─┘  │  └───────────┘└─┬─┘  │  └───────────┘└─┬─┘  │  └───────────┘└─┬─┘  │   ░  ║ └╥┘┌─┐   
-   q_2: ┤ H ├─░────────────────■────┼─────────────────┼────■─────────────────■────┼─────────────────┼────■───░──╫──╫─┤M├───
-        ├───┤ ░                     │                 │                           │                 │        ░  ║  ║ └╥┘┌─┐
-   q_3: ┤ H ├─░─────────────────────■─────────────────■───────────────────────────■─────────────────■────────░──╫──╫──╫─┤M├
-        └───┘ ░                                                                                              ░  ║  ║  ║ └╥┘
-meas: 4/════════════════════════════════════════════════════════════════════════════════════════════════════════╩══╩══╩══╩═
-                                                                                                                0  1  2  3 
-
+     ┌───┐ ░                                                                                              ░ ┌─┐         
+q_0: ┤ H ├─░─────────────────────■─────────────────■───────────────────────────■─────────────────■────────░─┤M├─────────
+     ├───┤ ░                     │                 │                           │                 │        ░ └╥┘┌─┐      
+q_1: ┤ H ├─░────────────────■────┼─────────────────┼────■─────────────────■────┼─────────────────┼────■───░──╫─┤M├──────
+     └───┘ ░ ┌───────────┐┌─┴─┐  │  ┌───────────┐┌─┴─┐  │  ┌───────────┐┌─┴─┐  │  ┌───────────┐┌─┴─┐  │   ░  ║ └╥┘┌─┐   
+q_2: ──────░─┤ Ry(p0[0]) ├┤ X ├──┼──┤ Ry(p0[1]) ├┤ X ├──┼──┤ Ry(p0[2]) ├┤ X ├──┼──┤ Ry(p0[3]) ├┤ X ├──┼───░──╫──╫─┤M├───
+           ░ ├───────────┤└───┘┌─┴─┐├───────────┤└───┘┌─┴─┐├───────────┤└───┘┌─┴─┐├───────────┤└───┘┌─┴─┐ ░  ║  ║ └╥┘┌─┐
+q_3: ──────░─┤ Ry(p1[0]) ├─────┤ X ├┤ Ry(p1[1]) ├─────┤ X ├┤ Ry(p1[2]) ├─────┤ X ├┤ Ry(p1[3]) ├─────┤ X ├─░──╫──╫──╫─┤M├
+           ░ └───────────┘     └───┘└───────────┘     └───┘└───────────┘     └───┘└───────────┘     └───┘ ░  ║  ║  ║ └╥┘
+c: 4/════════════════════════════════════════════════════════════════════════════════════════════════════════╩══╩══╩══╩═
+                                                                                                             3  2  1  0 
 
 
 CZ-implmentation
-              ░ ┌───┐┌────────────┐     ┌───┐┌────────────┐     ┌───┐┌────────────┐     ┌───┐┌────────────┐     ┌───┐┌───┐ ░ ┌─┐         
-   q_0: ──────░─┤ H ├┤ Ry(-p1[0]) ├─────┤ X ├┤ Ry(-p1[1]) ├─────┤ X ├┤ Ry(-p1[2]) ├─────┤ X ├┤ Ry(-p1[3]) ├─────┤ X ├┤ H ├─░─┤M├─────────
-              ░ ├───┤├────────────┤┌───┐└─┬─┘├────────────┤┌───┐└─┬─┘├────────────┤┌───┐└─┬─┘├────────────┤┌───┐└─┬─┘├───┤ ░ └╥┘┌─┐      
-   q_1: ──────░─┤ H ├┤ Ry(-p0[0]) ├┤ X ├──┼──┤ Ry(-p0[1]) ├┤ X ├──┼──┤ Ry(-p0[2]) ├┤ X ├──┼──┤ Ry(-p0[3]) ├┤ X ├──┼──┤ H ├─░──╫─┤M├──────
-        ┌───┐ ░ └───┘└────────────┘└─┬─┘  │  └────────────┘└─┬─┘  │  └────────────┘└─┬─┘  │  └────────────┘└─┬─┘  │  └───┘ ░  ║ └╥┘┌─┐   
-   q_2: ┤ H ├─░──────────────────────■────┼──────────────────┼────■──────────────────■────┼──────────────────┼────■────────░──╫──╫─┤M├───
-        ├───┤ ░                           │                  │                            │                  │             ░  ║  ║ └╥┘┌─┐
-   q_3: ┤ H ├─░───────────────────────────■──────────────────■────────────────────────────■──────────────────■─────────────░──╫──╫──╫─┤M├
-        └───┘ ░                                                                                                            ░  ║  ║  ║ └╥┘
-meas: 4/══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╩══╩══╩══╩═
-                                                                                                                              0  1  2  3 
+     ┌───┐ ░                                                                                        ░ ┌─┐         
+q_0: ┤ H ├─░───────────────────────■───────────────■─────────────────────■───────────────■──────────░─┤M├─────────
+     ├───┤ ░                       │               │                     │               │          ░ └╥┘┌─┐      
+q_1: ┤ H ├─░────────────────────■──┼───────────────┼──■───────────────■──┼───────────────┼──■───────░──╫─┤M├──────
+     └───┘ ░ ┌───┐┌───────────┐ │  │ ┌───────────┐ │  │ ┌───────────┐ │  │ ┌───────────┐ │  │ ┌───┐ ░  ║ └╥┘┌─┐   
+q_2: ──────░─┤ H ├┤ Ry(p0[0]) ├─■──┼─┤ Ry(p0[1]) ├─■──┼─┤ Ry(p0[2]) ├─■──┼─┤ Ry(p0[3]) ├─■──┼─┤ H ├─░──╫──╫─┤M├───
+           ░ ├───┤├───────────┤    │ ├───────────┤    │ ├───────────┤    │ ├───────────┤    │ ├───┤ ░  ║  ║ └╥┘┌─┐
+q_3: ──────░─┤ H ├┤ Ry(p1[0]) ├────■─┤ Ry(p1[1]) ├────■─┤ Ry(p1[2]) ├────■─┤ Ry(p1[3]) ├────■─┤ H ├─░──╫──╫──╫─┤M├
+           ░ └───┘└───────────┘      └───────────┘      └───────────┘      └───────────┘      └───┘ ░  ║  ║  ║ └╥┘
+c: 4/══════════════════════════════════════════════════════════════════════════════════════════════════╩══╩══╩══╩═
+                                                                                                       3  2  1  0 
 
 
 '''
@@ -43,36 +42,6 @@ from qiskit.result.utils import marginal_distribution
 
 sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits import qcrank
-    
-#...!...!....................
-def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
-    #print('MQCEV inp bits:',dataBit,addrBitsL)
-    # ... marginal distributions for 2 data qubits, for 1 circuit
-    assert dataBit not in addrBitsL
-    bitL=[dataBit]+addrBitsL
-    #print('MQCEV bitL:',bitL)
-    probs=marginal_distribution(probsB,bitL)
-    
-    #.... for each address comput probabilities,stat error, EV, EV_err 
-    nq_addr=len(addrBitsL)
-    seq_len=1<<nq_addr
-    prob=np.zeros(seq_len)
-    probEr=np.zeros(seq_len)
-    fstr='0'+str(nq_addr)+'b' 
-    for j in range(seq_len):
-        mbit=format(j,fstr)
-        mbit0=mbit+'0'; mbit1=mbit+'1'
-        m1=probs[mbit1] if mbit1 in probs else 0
-        m0=probs[mbit0] if mbit0 in probs else 0
-        m01=m0+m1
-        #print(j,mbit,'sum=',m01)
-        p=m1/m01 if m01>0 else 0
-        pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01
-        prob[j]=p
-        probEr[j]=pErr
-        
-    return 1-2*prob, 2*probEr
-  
 
 #...!...!....................
 class ParametricQCrankV2():
@@ -102,38 +71,29 @@ class ParametricQCrankV2():
         self.nq_addr = nq_addr
         self.nq_data = nq_data
         self.num_addr = 2 ** nq_addr
-
         
         # Create a parameter vector for each data qubit, each with 2**nq_addr parameters
-        self.parV = [
-            ParameterVector(f'p{i}', 2 ** nq_addr) for i in range(nq_data)
-        ]
+        self.parV = [   ParameterVector(f'p{i}', 2 ** nq_addr) for i in range(nq_data) ]
         
         # Generate circuit
         num_q=nq_addr + nq_data
-        self.circuit = QuantumCircuit(num_q)
+        self.circuit = QuantumCircuit(num_q,num_q)
 
         # Apply Hadamard gates (diffusion) to all address qubits
-        for i in range(nq_addr):
-            self.circuit.h(i)
-        if barrier:
-            self.circuit.barrier()
-
-        qdl=nq_addr; qdr=nq_addr+nq_data  # precompute range of address qubits
-        
+        for i in range(nq_addr):   self.circuit.h(i)
+        if barrier:   self.circuit.barrier()
+      
         if useCZ:  # will use CZ entangling gates
-            for jd in range(qdl,qdr):
-                self.circuit.h( jd)
+            for jd in range(nq_addr,num_q):   self.circuit.h( jd)
                        
         # Add nested and shifted uniform rotations along with controlled-X (CX) gates
         for ja in range(self.num_addr):
            
-            for jd in range(qdl,qdr):
+            for jd in range(nq_addr,num_q):
                 pars=self.parV[jd-nq_addr][ja]
-                if useCZ: pars=-pars  # not needed ???
                 self.circuit.ry(pars, jd)
                         
-            for jd in range(qdl,qdr):
+            for jd in range(nq_addr,num_q):
                 qctr = qcrank.compute_control(ja, self.nq_addr, shift=jd % nq_addr)
                 if useCZ:
                     self.circuit.cz(qctr, jd)
@@ -141,14 +101,13 @@ class ParametricQCrankV2():
                     self.circuit.cx(qctr, jd)
 
         if useCZ :  # will use CZ entangling gates
-            for jd in range(qdl,qdr):                
-                self.circuit.h( jd)                
-                
-        # Reverse qubit order to match Qiskit's little-endian convention
-        self.circuit = self.circuit.reverse_bits()
-        
+            for jd in range(nq_addr,num_q):   self.circuit.h( jd)                
+
         if measure:
-            self.circuit.measure_all()
+            if barrier: self.circuit.barrier()
+            for i in range(num_q):
+                j=num_q-1-i  # Reverse qubit order to match Qiskit's little-endian convention
+                self.circuit.measure(i,j)
             
             
 #...!...!....................
@@ -184,8 +143,7 @@ class ParametricQCrankV2():
         self.angles_qcrank = np.empty(self.angles.shape)
         for r in range(self.angles.shape[1]):
             self.angles_qcrank[:, r] = qcrank.shifted_gray_permutation(
-                qcrank.sfwht(self.angles[:, r]),
-                r % self.nq_addr
+                qcrank.sfwht(self.angles[:, r]),  r % self.nq_addr
             )
 
 #...!...!....................
@@ -232,4 +190,80 @@ class ParametricQCrankV2():
 
         return rec_udata,rec_udataErr
 
+# - - - - - - -  UTILITY function - - - - - - -
 
+    
+#...!...!....................
+def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
+    #print('MQCEV inp bits:',dataBit,addrBitsL)
+    # ... marginal distributions for 2 data qubits, for 1 circuit
+    assert dataBit not in addrBitsL
+    bitL=[dataBit]+addrBitsL
+    #print('MQCEV bitL:',bitL)
+    probs=marginal_distribution(probsB,bitL)
+    
+    #.... for each address comput probabilities,stat error, EV, EV_err 
+    nq_addr=len(addrBitsL)
+    seq_len=1<<nq_addr
+    prob=np.zeros(seq_len)
+    probEr=np.zeros(seq_len)
+    fstr='0'+str(nq_addr)+'b' 
+    for j in range(seq_len):
+        mbit=format(j,fstr)
+        mbit0=mbit+'0'; mbit1=mbit+'1'
+        m1=probs[mbit1] if mbit1 in probs else 0
+        m0=probs[mbit0] if mbit0 in probs else 0
+        m01=m0+m1
+        #print(j,mbit,'sum=',m01)
+        p=m1/m01 if m01>0 else 0
+        pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01
+        prob[j]=p
+        probEr[j]=pErr
+        
+    return 1-2*prob, 2*probEr
+  
+
+#...!...!..................
+def analyze_qcrank_residuals(data_inp, data_rec):
+    """
+    Compute and print per-image residual analysis.
+    - Computes per-pixel residuals
+    - Computes mean residual and its standard deviation
+    - Computes correlation between residuals and input data
+    - Accumulates values across images and prints the mean at the end
+    """
+
+    n_img = data_inp.shape[-1]
+    mean_residuals = []
+    std_residuals = []
+    correlations = []
+    print('  analyze_residuals for %d imges'%n_img)
+    
+    for i in range(n_img):
+        resid = data_inp[..., i] - data_rec[..., i]
+        mean_resid = np.mean(resid)
+        std_resid = np.std(resid)
+        
+        # Compute correlation coefficient
+        corr_coef = np.corrcoef(data_inp[..., i].ravel(), data_rec[..., i].ravel())[0, 1]
+
+        # Compute angle in degrees
+        angle_deg = np.degrees(np.arccos(corr_coef))
+        
+        # Store results
+        mean_residuals.append(mean_resid)
+        std_residuals.append(std_resid)
+        correlations.append(corr_coef)
+        
+        # Print values with C-style formatting
+        print("img=%d  mean=%6.3f  std=%6.3f  corr=%.2f   tilt angle=%.1f/deg" % (i, mean_resid, std_resid, corr_coef,angle_deg))
+    
+    # Compute mean of accumulated values
+    mean_mean_resid = np.mean(mean_residuals)
+    mean_std_resid = np.mean(std_residuals)
+    mean_corr = np.mean(correlations)
+    
+    # Print final averages
+    print("Overall \nresiduals: mean=%.3f  std=%.3f  corr=%.3f\n" % (mean_mean_resid, mean_std_resid, mean_corr))
+    
+    return mean_mean_resid, mean_std_resid, mean_corr

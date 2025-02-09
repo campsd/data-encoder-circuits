@@ -5,7 +5,7 @@ Paper:
 Quantum-parallel vectorized data encodings and computations on trapped-ion and transmon QPUs
 https://www.nature.com/articles/s41598-024-53720-x
 
-V2 QCrank generator, uses mnemonic procedure to generate circuit, can do CZ or CZ entangling basis 
+V2 QCrank generator, uses mnemonic procedure to generate circuit, can do CX or CZ entangling basis 
 
 Encodes  lists of real numbers on na+nd qubits, where
 na : number of address qubits
@@ -20,7 +20,7 @@ Dependency : https://github.com/campsd/data-encoder-circuits
 '''
 import sys,os
 sys.path.append(os.path.abspath("/qcrank_light"))
-from datacircuits.ParametricQCrankV2 import ParametricQCrankV2 as QCrankV2
+from datacircuits.ParametricQCrankV2 import ParametricQCrankV2 as QCrankV2, analyze_qcrank_residuals
 
 import numpy as np
 from qiskit_aer import AerSimulator
@@ -37,7 +37,7 @@ def get_parser():
 
     parser.add_argument('-q','--numQubits', default=[2,2], type=int,  nargs='+', help='pair: nq_addr nq_data, space separated ')
 
-    parser.add_argument('-i','--numImages', default=2, type=int, help='num of images packed in to the job')
+    parser.add_argument('-i','--numImages', default=10, type=int, help='num of images packed in to the job')
 
     parser.add_argument("--useCZ", action='store_true', default=False, help="change from CX to CZ entangelemnt")
     # Qiskit:
@@ -45,9 +45,7 @@ def get_parser():
     parser.add_argument( "-E","--execDecoding", action='store_true', default=False, help="do not decode job output")
     parser.add_argument( "-e1","--exportQPY", action='store_true', default=False, help="exprort parametrized circuit as QPY file")
     parser.add_argument( "-e2","--exportQASM", action='store_true', default=False, help="exprort parametrized circuit as QASM file")
- 
-
- 
+  
   
     args = parser.parse_args()
 
@@ -57,6 +55,8 @@ def get_parser():
     assert len(args.numQubits)==2
 
     return args
+
+
 
 #=================================
 #=================================
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     nqTot=qc.num_qubits
     print(' gates count:', qc.count_ops())
 
-    if args.verb>2 or nq_addr<4:
+    if args.verb>2 or nq_addr<5:
         print(qcrankObj.circuit.draw())
    
     if args.exportQPY:
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     jobRes=job.result()
     
     print('num Circ:%d'%n_img )
-    countsL=[jobRes[i].data.meas.get_counts()  for i in range(n_img)]
+    countsL=[jobRes[i].data.c.get_counts()  for i in range(n_img)]
     elaT=time()-T0
     print('M: QCrank simu nqTot=%d  shots=%d  nImg=%d  ended elaT=%.1f sec'%(nqTot,args.numShots ,n_img,elaT))
 
@@ -155,6 +155,7 @@ if __name__ == "__main__":
             print('stat err img=%d   %d shots/addr\n'%(i,args.numShots/num_addr), (data_inp[..., i] - data_rec[..., i]).T)
             if i>2: break
 
-    print('....L2 distance = sqrt( sum (res^2)), shots=%d  ndf=%d '%(args.numShots ,num_addr))
-    for i in range(n_img):
-        print('img=%d L2=%.2g'%(i, np.linalg.norm(data_inp[..., i] - data_rec[..., i])))
+    shpad=args.numShots /num_addr
+    print('post processing  shots=%d  nAddr=%d   shots/addr=%.d  relErr=%.3f'%(args.numShots ,num_addr,shpad,1/np.sqrt(shpad)))
+
+    analyze_qcrank_residuals(data_inp, data_rec)
