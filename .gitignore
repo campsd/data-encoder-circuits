@@ -52,4 +52,6 @@ old
 *.qasm
 *.qpy
 *~
-
+out/*/*
+!out/*/.gitkeep
+.DS_Store

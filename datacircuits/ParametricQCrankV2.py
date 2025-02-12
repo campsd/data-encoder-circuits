@@ -163,6 +163,13 @@ class ParametricQCrankV2():
 
 #...!...!....................
     def reco_from_yields(self, countsL):
+        return qcrank_reco_from_yields( countsL,self.nq_addr,self.nq_data )
+
+
+# - - - - - - -  UTILITY function - - - - - - -
+
+#...!...!....................
+def qcrank_reco_from_yields( countsL,nq_addr,nq_data):
         '''Reconstructs data from measurement counts.
 
         Args:
@@ -174,24 +181,20 @@ class ParametricQCrankV2():
                 Reconstructed un-normalized data with shape 
                 (num_addr, nq_data, number of circuits).
         '''
-        addrBitsL = [self.nq_data + i for i in range(self.nq_addr)]
+        addrBitsL = [nq_data + i for i in range(nq_addr)]
         nCirc = len(countsL)
-
-        rec_udata = np.zeros((self.num_addr, self.nq_data, nCirc))  # To match input indexing
-        rec_udataErr = np.zeros_like(rec_udata)
-    
+        num_addr=1<<nq_addr
+        rec_udata = np.zeros((num_addr, nq_data, nCirc))  # To match input indexing
+        rec_udataErr = np.zeros_like(rec_udata)       
         for ic in range(nCirc):
             counts = countsL[ic]
-            for jd in range(self.nq_data):
-                ibit = self.nq_data - 1 - jd
+            for jd in range(nq_data):
+                ibit = nq_data - 1 - jd
                 valV,valErV = marginalize_qcrank_EV(addrBitsL, counts, dataBit=ibit)
                 rec_udata[:, jd, ic] = valV
                 rec_udataErr[:, jd, ic] = valErV
 
         return rec_udata,rec_udataErr
-
-# - - - - - - -  UTILITY function - - - - - - -
-
     
 #...!...!....................
 def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):

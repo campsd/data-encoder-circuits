@@ -1,0 +1,92 @@
+(Minimal instruction - the code can do much more)
+
+Example how to run QCrank in 3 scenarios (aka 3 backends)
+a) local ideal Qiskit simu
+b) local noisy simu using real HW calibration to prime error model
+c) cloud execution on IBM HW
+
+Restrictions
+ b), c) require this command works  service = QiskitRuntimeService()
+ It means you need to have valid ceredencials for IBM-Q instance
+
+
+For all 3 backends, the raw data are saved in  out/meas directory and post processed data and plots are saved in out/post directory
+
+For real HW backend the job-meta data, including IBM job id are saved in out/jobs and  raw results can be pulled from IBM cloud at any time later
+
+= = = = = = = = = =
+a) = = = = =  local backend ideal simulator = = = = = = =
+= = = = = = = = = =
+
+Run 1 QCrank job for many sequences of fixed size:
+see  def construct_random_inputs(md,verb=1):
+... data_inp = np.random.uniform(-1, 1., size=(num_addr, nq_data, n_img)) ...
+
+cloud_ibmq$ ./submit_ibmq_job.py -E
+
+OUTPUT:  out/meas/aer_3072b5.meas.h5
+
+Plot residual
+cloud_ibmq$  ./postproc_qcrank.py  --expName   aer_3072b5   -p a
+
+OUTPUT :  out/post/aer_3072b5_f10.png
+
+= = = = = = = = = =
+b) = = = = =  local backend noisy simulator = = = = = = =
+= = = = = = = = = =
+
+Select target HW you want to simulate and have access to it
+https://quantum.ibm.com/services/resources
+
+Run noisy simu for Torion use backend named 'fake_torino'
+
+cloud_ibmq$ ./submit_ibmq_job.py --backend fake_torino -E
+
+OUTPUT: out/meas/fake_4a7f48.meas.h5
+
+Plotting as above, use: --expName   fake_4a7f48 
+
+= = = = = = = = = =
+c) = = = = =  cloud backend real quantum HW  = = = = = = =
+= = = = = = = = = =
+
+Select target HW you want to simulate and have access to it
+https://quantum.ibm.com/services/resources
+
+Submit the job
+cloud_ibmq$  ./submit_ibmq_job.py --backend ibm_brussels -E
+
+OUTPUT:   out/jobs/ibm_0y8h1j.ibm.h5
+
+Retrieve raw data from cloud and save them locally
+
+cloud_ibmq$ ./retrieve_ibmq_job.py --expName ibm_brussels
+
+OUTPUT:  out/meas/ibm_0y8h1j.meas.h5
+
+Plotting as before, use  --expName   ibm_0y8h1j
+
+
+= = = = = = = = = =
+= = = = = = = = = =
+Note, all described above output files are stored in the out directory for easier testing
+
+cloud_ibmq/out$ ls -l *
+jobs:
+total 8
+-rw-r--r--. 1 core dialout 6800 Feb 11 19:01 ibm_0y8h1j.ibm.h5
+
+meas:
+total 36
+-rw-r--r--. 1 core dialout 10240 Feb 11 16:27 aer_3072b5.meas.h5
+-rw-r--r--. 1 core dialout 10240 Feb 11 16:31 fake_4a7f48.meas.h5
+-rw-r--r--. 1 core dialout 10240 Feb 11 19:03 ibm_0y8h1j.meas.h5
+
+post:
+total 296
+-rw-r--r--. 1 core dialout 10240 Feb 11 18:58 aer_3072b5.h5
+-rw-r--r--. 1 core dialout 62468 Feb 11 18:58 aer_3072b5_f10.png
+-rw-r--r--. 1 core dialout 10240 Feb 11 18:59 fake_4a7f48.h5
+-rw-r--r--. 1 core dialout 63240 Feb 11 18:59 fake_4a7f48_f10.png
+-rw-r--r--. 1 core dialout 10240 Feb 11 19:08 ibm_0y8h1j.h5
+-rw-r--r--. 1 core dialout 72318 Feb 11 19:08 ibm_0y8h1j_f10.png
