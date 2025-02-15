@@ -60,7 +60,7 @@ OUTPUT:   out/jobs/ibm_0y8h1j.ibm.h5
 
 Retrieve raw data from cloud and save them locally
 
-cloud_ibmq$ ./retrieve_ibmq_job.py --expName ibm_brussels
+cloud_ibmq$ ./retrieve_ibmq_job.py --expName  ibm_0y8h1j
 
 OUTPUT:  out/meas/ibm_0y8h1j.meas.h5
 

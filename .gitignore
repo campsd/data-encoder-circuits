@@ -52,6 +52,10 @@ old
 *.qasm
 *.qpy
 *~
-out/*/*
+out
 !out/*/.gitkeep
 .DS_Store
+.bash_history
+.config/
+.qnx/
+.viminfo

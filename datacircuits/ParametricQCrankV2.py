@@ -218,8 +218,11 @@ def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
         m0=probs[mbit0] if mbit0 in probs else 0
         m01=m0+m1
         #print(j,mbit,'sum=',m01)
-        p=m1/m01 if m01>0 else 0
-        pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01
+        if m01>0 :
+            p=m1/m01
+            pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01
+        else:
+            p=0; perr=1
         prob[j]=p
         probEr[j]=pErr
         

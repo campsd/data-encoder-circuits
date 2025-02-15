@@ -28,8 +28,6 @@ from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
 from toolbox.Util_IOfunc import dateT2Str
 from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
 from toolbox.Util_QiskitV2 import  circ_depth_aziz, harvest_circ_transpMeta
-from qiskit_aer import AerSimulator
-from qiskit import transpile
 
 sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits.ParametricQCrankV2 import  ParametricQCrankV2 as QCrankV2, qcrank_reco_from_yields
@@ -128,7 +126,7 @@ def construct_random_inputs(md,verb=1):
 
     # generate float random data
     data_inp = np.random.uniform(-1, 1., size=(num_addr, nq_data, n_img))
-    if args.verb>2:
+    if verb>2:
         print('input data=',data_inp.shape,repr(data_inp))
     bigD={'inp_udata': data_inp}
  
@@ -184,6 +182,9 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
 #=================================
 #=================================
 if __name__ == "__main__":
+    from qiskit_aer import AerSimulator
+    from qiskit import transpile
+
     args=commandline_parser()
     np.set_printoptions(precision=3)
     expMD=buildPayloadMeta(args)
