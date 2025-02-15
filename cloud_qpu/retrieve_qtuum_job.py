@@ -59,7 +59,7 @@ def retrieve_qtuum_job(md,bigD):
         result = results[ic].download_result()
         counter=result.get_counts()
         # Convert tuple keys to bitstrings
-        bitstring_dict = {"".join(map(str, key)): value for key, value in counter.items()}
+        bitstring_dict = {"".join(map(str, reversed(key))): value for key, value in counter.items()}
         countsL[ic]=bitstring_dict 
         #print('\nis=%d  res:'%(ic)); pprint(bitstring_dict)
         

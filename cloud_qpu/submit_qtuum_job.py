@@ -10,7 +10,9 @@ HD5 arrays contain input images and QCrank circuits
 
 Dependence: qpixl, qiskit
 
-Possible backends
+Nexus web API: https://nexus.quantinuum.com/jobs 
+
+???Possible backends
 ['H1-1SC', 'H1-1E', 'H2-1E', 'H1-1', 'H2-1SC', 'H2-1','ideal']
 
 --backend : selects backend
@@ -29,7 +31,7 @@ from pprint import pprint
 from time import time, localtime
 import qnexus as qnx
 
-#from pytket.extensions.qiskit import qiskit_to_tk   # needed by Qtuum
+from pytket.extensions.qiskit import qiskit_to_tk   # needed by Qtuum
 
 from toolbox.Util_IOfunc import dateT2Str
 from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
@@ -141,7 +143,7 @@ def compile_qtuum_circuits(crefL,md):
     for ic in range(nCirc):
         cost=qnx.circuits.cost( circuit_ref=refCL[ic],n_shots=shots,
                                 backend_config=devConf1, syntax_checker="H1-1SC"  )
-        print('is=%d shots=%d cost=%.1f:'%(ic,shots,cost))
+        print('is=%d shots=%d cost=%.1f'%(ic,shots,cost))
         break
     return refCL,devConf1
 
@@ -193,7 +195,6 @@ if __name__ == "__main__":
     print('M: ideal gates count:', qcP.count_ops())
     if args.verb>2 or nq_addr<4:  print(qcrankObj.circuit.draw())
 
-
     # -------- bind the data to parametrized circuit  -------
     qcrankObj.bind_data(expD['inp_udata'])
     
@@ -206,7 +207,7 @@ if __name__ == "__main__":
         
     print('M:  %d circuits with %d qubits are ready'%(nCirc,nqTot))
 
-    if 1:  # fake random circuits  untill qiskit is fixed
+    if 0:  # fake random circuits  untill qiskit is fixed
         from pytket import Circuit, OpType
         import random
 
@@ -216,7 +217,7 @@ if __name__ == "__main__":
             
         if args.verb>1: print('circ commands:\n',qcEL[0].get_commands())
         
-        
+    qcTketL=[  qiskit_to_tk(qc) for qc in qcEL]        
     if not args.executeCircuit:
         pprint(expMD)
         print('\nNO execution of circuit, use -E to execute the job\n')
@@ -224,14 +225,15 @@ if __name__ == "__main__":
         
     # ----- submission ----------
     numShots=expMD['submit']['num_shots']
-    print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcEL[0].n_qubits,numShots,args.backend))
+    print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcTketL[0].n_qubits,numShots,args.backend))
 
-
+    #rrr
     #1qnx.login_with_credentials()
-    project = qnx.projects.get_or_create(name="qcrank-feb-14c")
+    project = qnx.projects.get_or_create(name="qcrank-feb-15")
     qnx.context.set_active_project(project)
+
     
-    crefL=push_circ_to_nexus(qcEL,expMD)
+    crefL=push_circ_to_nexus(qcTketL,expMD)
     ccrefL,devConf=compile_qtuum_circuits(crefL,expMD)
 
     #.... execution     

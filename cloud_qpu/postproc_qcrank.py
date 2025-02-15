@@ -131,7 +131,7 @@ if __name__=="__main__":
     #--------------------------------
     # ....  plotting ........
     args.prjName=expMD['short_name']
-    expMD['plot']={'resid_max_range':0.4}
+    expMD['plot']={'resid_max_range':0.3}
 
     plot=Plotter(args)
     fig0=10 if expMD['postproc']['hw_calib'] else 1
