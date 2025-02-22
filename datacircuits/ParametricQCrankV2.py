@@ -222,7 +222,7 @@ def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
             p=m1/m01
             pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01
         else:
-            p=0; perr=1
+            p=0; pErr=1
         prob[j]=p
         probEr[j]=pErr
         

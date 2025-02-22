@@ -43,53 +43,6 @@ from submit_ibmq_job import buildPayloadMeta, construct_random_inputs
 from datacircuits.ParametricQCrankV2 import  ParametricQCrankV2 as QCrankV2, qcrank_reco_from_yields
 
 #...!...!....................
-def generate_random_circuit(nq=5, addRev=False, depth=3):
-    """
-    Generates a random quantum circuit on nq qubits.
-    
-    Parameters:
-        nq (int): Number of qubits.
-        addRevers (bool): 
-            - If False, returns a random circuit with measurements.
-            - If True, returns a circuit composed of a random circuit (without measurement),
-              its inverse, and then adds measurements on all qubits.
-        depth (int): Depth of the random circuit.
-        
-    Returns:
-        QuantumCircuit: The generated quantum circuit.
-    """
-
-    circ = Circuit(nq)
-    print('depth=',depth)
-    single_qubit_gates = [OpType.Rx, OpType.Ry, OpType.Rz, OpType.H]
-    two_qubit_gates = [OpType.CX, OpType.CZ]
-    
-    for _ in range(depth):
-        # Add random single-qubit gate
-        q = random.randint(0, nq-1)
-        gate = random.choice(single_qubit_gates)
-        if gate in [OpType.Rx, OpType.Ry, OpType.Rz]:
-            angle = random.uniform(0, 2*3.14159)
-            circ.add_gate(gate, [angle], [q])
-        else:
-            circ.add_gate(gate, [q])
-        
-        # Add random two-qubit gate
-        if random.random() < 0.5:
-            q1, q2 = random.sample(range(nq), 2)
-            gate = random.choice(two_qubit_gates)
-            circ.add_gate(gate, [q1, q2])
-
-
-    if addRev:
-        invCirc = circ.dagger()
-        circ.add_barrier(range(nq))
-        circ.append(invCirc)
-        
-    circ.measure_all()
-    return circ
-
-#...!...!....................
 def push_circ_to_nexus(qcL,md):
     myHN=hashlib.md5(os.urandom(32)).hexdigest()[:6]
     md['hash']=myHN
@@ -206,16 +159,7 @@ if __name__ == "__main__":
         print(qcEL[0].draw())
         
     print('M:  %d circuits with %d qubits are ready'%(nCirc,nqTot))
-
-    if 0:  # fake random circuits  untill qiskit is fixed
-        from pytket import Circuit, OpType
-        import random
-
-        nq=nq_addr+nq_data
-        for ic in range(nCirc):
-            qcEL[ic]=generate_random_circuit(nq, addRev=True, depth=expMD['payload']['seq_len'])
-            
-        if args.verb>1: print('circ commands:\n',qcEL[0].get_commands())
+    if args.verb>1: print('circ commands:\n',qcEL[0].get_commands())
         
     qcTketL=[  qiskit_to_tk(qc) for qc in qcEL]        
     if not args.executeCircuit:
@@ -227,12 +171,10 @@ if __name__ == "__main__":
     numShots=expMD['submit']['num_shots']
     print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcTketL[0].n_qubits,numShots,args.backend))
 
-    #rrr
     #1qnx.login_with_credentials()
     project = qnx.projects.get_or_create(name="qcrank-feb-15")
     qnx.context.set_active_project(project)
-
-    
+   
     crefL=push_circ_to_nexus(qcTketL,expMD)
     ccrefL,devConf=compile_qtuum_circuits(crefL,expMD)
 

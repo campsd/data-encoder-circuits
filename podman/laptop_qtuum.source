@@ -5,7 +5,8 @@ echo load my QTUUM creds
 source /Users/balewski/.ssh/qtuum.creds  talita
 #env |grep MY_QTUUM  # activate to see the creds
 
-IMG=balewski/ubu24-qtuum:p1f
+IMG=balewski/ubu24-qtuum:p1g
+IMG=balewski/ubu24-qtuum:p1h
 
 echo launch image $IMG
 echo you are launching Podman image ...  remeber to exit
@@ -31,6 +32,7 @@ eval podman run -it --network=host  \
      -e MY_QTUUM_NAME=$MY_QTUUM_NAME \
      -e MY_QTUUM_PASS=\"$MY_QTUUM_PASS\" \
      -e MY_QTUUM_GROUP=$MY_QTUUM_GROUP \
+     -e LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1 \
      --volume /shared_volumes/$WORK_DIR:$WORK_DIR \
      --volume /shared_volumes/quantumMind:/quantumMind \
      --volume $DATA_VAULT:/dataVault2025 \
@@ -40,3 +42,4 @@ eval podman run -it --network=host  \
      $IMG /bin/bash
 
 #  nslookup auth.quantum-computing.ibm.com
+#

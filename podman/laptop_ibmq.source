@@ -3,9 +3,8 @@
 
 source ~/.ssh/ibmq.creds talita
 
-#IMG=balewski/ubu24-qiskit:p5c  # crashes
 IMG=balewski/ubu24-qiskit:p5  # works
-#IMG=balewski/ubu24-qiskit:p6a  # crashes
+IMG=balewski/ubu24-qiskit:p6c
 
 echo launch image $IMG
 echo you are launching Podman image ...  remeber to exit
@@ -31,6 +30,7 @@ eval podman run -it --network=host  \
      -e QISKIT_IBM_TOKEN=$QISKIT_IBM_TOKEN \
      -e QISKIT_IBM_CHANNEL=$QISKIT_IBM_CHANNEL \
      -e QISKIT_IBM_INSTANCE=$QISKIT_IBM_INSTANCE \
+     -e LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1 \
      --volume /shared_volumes/$WORK_DIR:$WORK_DIR \
      --volume $DATA_VAULT:/dataVault2025 \
      -e My_dataVault=/dataVault2025/data_tmp \

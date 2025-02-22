@@ -28,6 +28,8 @@ from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
 from toolbox.Util_IOfunc import dateT2Str
 from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
 from toolbox.Util_QiskitV2 import  circ_depth_aziz, harvest_circ_transpMeta
+from qiskit_aer import AerSimulator
+from qiskit import transpile
 
 sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits.ParametricQCrankV2 import  ParametricQCrankV2 as QCrankV2, qcrank_reco_from_yields
@@ -182,8 +184,6 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
 #=================================
 #=================================
 if __name__ == "__main__":
-    from qiskit_aer import AerSimulator
-    from qiskit import transpile
 
     args=commandline_parser()
     np.set_printoptions(precision=3)
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     options = SamplerOptions()
     options.default_shots=numShots
     
-    if expMD['submit']['random_compilation']: # erro mit  - works only for real HW
+    if expMD['submit']['random_compilation']: #  works only for real HW
         options.twirling.enable_gates = True
         options.twirling.enable_measure = True
         options.twirling.num_randomizations=60
