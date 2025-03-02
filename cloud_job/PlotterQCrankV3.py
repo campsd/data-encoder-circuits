@@ -73,8 +73,9 @@ def summary_column(md):
     txt+='\nnum 2q gates: %d'%tmd['2q_gate_count']
     txt+='\n2q gates depth: %d'%tmd['2q_gate_depth']
 
-    #txt+='\nhwCalib: %s'%pom['hw_calib']
-    #if pom['hw_calib']: txt+=' fac: %.2f'%pom['ampl_fact']
+    txt+='\nhwCal: %s'%pom['hw_calib']
+    if pom['hw_calib']: txt+=': %.2f'%pom['ampl_fact']
+    
     return txt
     if 'noise_model' in smd:
         txt+='\nfake : %s'%(smd['noise_model'])       

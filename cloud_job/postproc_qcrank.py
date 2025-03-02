@@ -49,6 +49,7 @@ def postproc_qcrank(bigD,md):
     rdata=expD['rec_udata'].flatten()
     tdata=expD['inp_udata'].flatten()
 
+    #1print('tdata sample:',tdata[:10]);aa
     elm=compute_ellipse(tdata,rdata)
 
     if 1:  # hack to do self-calibration

@@ -46,6 +46,7 @@ def commandline_parser(backName="aer_ideal",provName="local sim"):
     # .... QCrank speciffic
     parser.add_argument('-q','--numQubits', default=[2,2], type=int,  nargs='+', help='pair: nq_addr nq_data, space separated ')
     parser.add_argument('-i','--numSample', default=10, type=int, help='num of images packed in to the job')
+    parser.add_argument('--rndSeed', default=None, type=int, help='(optional) freezes randominput sequence')
     parser.add_argument("--useCZ", action='store_true', default=False, help="change from CX to CZ entangelemnt")
 
     # .... job running
@@ -81,6 +82,7 @@ def buildPayloadMeta(args):
     pd['num_sample']=args.numSample
     pd['num_qubit']=pd['nq_addr']+pd['nq_data']
     pd['seq_len']=pd['nq_data']*pd['num_addr']
+    pd['rnd_seed']=args.rndSeed
     
     sbm={}
     sbm['num_shots']=args.numShot
@@ -108,7 +110,7 @@ def harvest_sampler_submitMeta(job,md,args):
     sd['date']=dateT2Str(t1)
     sd['unix_time']=int(time())
     sd['provider']=args.provider
-    print('bbb',args.backend,args.expName)
+    #print('bbb',args.backend,args.expName)
     if args.expName==None:
         # the  6 chars in job id , as handy job identiffier
         md['hash']=sd['job_id'].replace('-','')[3:9] # those are still visible on the IBMQ-web
@@ -120,14 +122,16 @@ def harvest_sampler_submitMeta(job,md,args):
         md['short_name']=args.expName
 
 #...!...!....................
-def construct_random_inputs(md,verb=1):
+def construct_random_inputs(md,verb=1, seed=None):
     pmd=md['payload']
     num_addr=pmd['num_addr']
     nq_data=pmd['nq_data']
     n_img=pmd['num_sample']
 
     # generate float random data
+    np.random.seed(pmd['rnd_seed'])  # Set a fixed seed for reproducibility, None gives alwasy random 
     data_inp = np.random.uniform(-1, 1., size=(num_addr, nq_data, n_img))
+    #print('data_inp sample:\n',data_inp[:3,:3,:2]); kk
     if verb>2:
         print('input data=',data_inp.shape,repr(data_inp))
     bigD={'inp_udata': data_inp}

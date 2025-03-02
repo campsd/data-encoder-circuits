@@ -42,7 +42,7 @@ def retrieve_qtuum_job(md,bigD):
     #print(dir(jobStatus))
     #  'cancelled_time', 'completed_time', 'count', 'df', 'error_detail', 'error_time', 'from_dict', 'index', 'message', 'queue_position', 'queued_time', 'running_time', 'status', 'submitted_time']
     stat=jobStatus.status
-    print('stat:',stat,jobStatus.running_time)
+    print('stat:',stat) #,jobStatus.running_time)
 
     qnx.jobs.wait_for(ref_exec)
     results = qnx.jobs.results(ref_exec)
