@@ -15,7 +15,7 @@ import time,os,sys
 from pprint import pprint
 import numpy as np
 from toolbox.Util_H5io4 import  read4_data_hdf5, write4_data_hdf5
-#from toolbox.Util_Qtuum import access_qtuum_backend,
+from toolbox.Util_QiskitV2 import pack_counts_to_numpy
 
 import json
 import qnexus as qnx
@@ -49,7 +49,7 @@ def retrieve_qtuum_job(md,bigD):
 
     nCirc=len(results)
     print('job  finished, nCirc=%d'%(nCirc))
-
+        
     qa={}
     qa['status']=str(stat)
     qa['num_circ']=nCirc
@@ -66,6 +66,9 @@ def retrieve_qtuum_job(md,bigD):
     print('job QA'); pprint(qa)
     md['job_qa']=qa
     bigD['rec_udata'], bigD['rec_udata_err'] =  qcrank_reco_from_yields(countsL,pmd['nq_addr'],pmd['nq_data'])
+    
+    if 1:  # saving raw shots as well, needed when merging mutiple jobs        
+        pack_counts_to_numpy(md,bigD,countsL)
 
     return bigD    
 

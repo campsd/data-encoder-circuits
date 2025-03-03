@@ -12,14 +12,14 @@ basePath="/dataVault2025/paper_QCE2025_noisyH1"
 echo bp=$basePath
 nqd=12
 
-for i in {2..5}; do
+for i in {1..5}; do
     expName=qcr4a+${nqd}d_h1-1e_$i
     
     #./submit_qtuum_job.py --rndSeed 42 --basePath $basePath --numQubits 4 $nqd --numSample 50 --numShot 10_000 --backend H1-1E --expName $expName -E
 
     ./retrieve_qtuum_job.py  --basePath $basePath  --expName  $expName
 
-    ./postproc_qcrank.py  --basePath $basePath  --expName  $expName   -p a
+    #./postproc_qcrank.py  --basePath $basePath  --expName  $expName   -p a
     echo "dealt with  job $i "
     echo
 done
