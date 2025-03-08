@@ -1,7 +1,8 @@
 #!/bin/bash
-# setup IBMQ creds:     /dataVault/activate_IBMProvider.py
+# setup IBMQ creds:     /dataVault2025/activate_QiskitRuntimeService.py
 
 source ~/.ssh/ibmq.creds jan
+#talita
 
 IMG=balewski/ubu24-qiskit:p5  # works
 IMG=balewski/ubu24-qiskit:p6d

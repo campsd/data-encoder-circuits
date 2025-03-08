@@ -9,12 +9,16 @@ Records meta-data containing  job_id
 HD5 arrays contain input images and QCrank circuits
 
 Dependence: qpixl, qiskit
-???
---backend : selects backend
---fakeNoise  : does nothing, use 'ideal' for noisless backend
+
+Nexus web API: https://nexus.quantinuum.com/jobs 
+
+Possible backends: ['garnet', 'sirius', 'deneb']
+For ideal circuit use : ./submit_ibmq_job.py
+
+will transpiler parametric circuits
 
 Use case:
- ./submit_qtuum_job.py -n 100  -E -i 2
+ ./submit_iqm_job.py -n 100  -E -i 2
 
 Web portal
 https://resonance.meetiqm.com/jobs
@@ -25,7 +29,8 @@ import numpy as np
 from pprint import pprint
 from time import time, localtime
 
-from iqm.qiskit_iqm import IQMProvider
+#from pytket.extensions.qiskit import qiskit_to_tk   # needed by Qtuum
+from iqm.qiskit_iqm import IQMProvider, transpile_to_IQM #,IQMJob
 
 from toolbox.Util_IOfunc import dateT2Str
 from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
@@ -33,12 +38,11 @@ from toolbox.Util_QiskitV2 import  circ_depth_aziz, harvest_circ_transpMeta
 
 from submit_ibmq_job import commandline_parser
 
-from submit_ibmq_job import buildPayloadMeta, construct_random_inputs
+from submit_ibmq_job import buildPayloadMeta, construct_random_inputs, harvest_submitMeta
 from datacircuits.ParametricQCrankV2 import  ParametricQCrankV2 as QCrankV2, qcrank_reco_from_yields
-from qiskit import transpile
-    
+
 #...!...!....................
-def push_circ_to_nexus(qcL,md):
+def XXpush_circ_to_nexus(qcL,md):
     myHN=hashlib.md5(os.urandom(32)).hexdigest()[:6]
     md['hash']=myHN
     nCirc=len(qcL)
@@ -55,7 +59,7 @@ def push_circ_to_nexus(qcL,md):
     return crefL
 
 #...!...!....................
-def compile_qtuum_circuits(crefL,md):
+def XXcompile_qtuum_circuits(crefL,md):
     nCirc=len(crefL)
     sbm=md['submit']
     sbm['user_group']='CHM170'  #tmp
@@ -96,7 +100,7 @@ def compile_qtuum_circuits(crefL,md):
     return refCL,devConf1
 
 #...!...!....................
-def submit_qtuum__circuits(ccrefL,devConf,md):
+def XXsubmit_qtuum__circuits(ccrefL,devConf,md):
     nCirc=len(ccrefL)
     sbm=md['submit']
     t0=time()
@@ -122,11 +126,13 @@ def submit_qtuum__circuits(ccrefL,devConf,md):
 #=================================
 #=================================
 if __name__ == "__main__":
-    args=commandline_parser(backName='H1-1E',provName="Qtuum_cloud")
+    np.set_printoptions(precision=3)
+    args=commandline_parser(backName='deneb',provName="IQM_cloud")
     outPath=os.path.join(args.basePath,'jobs')
     assert os.path.exists(outPath)
+
+    assert args.backend in  ['garnet', 'sirius', 'deneb']
     
-    np.set_printoptions(precision=3)
     expMD=buildPayloadMeta(args)
     pprint(expMD)
     expD=construct_random_inputs(expMD)
@@ -143,7 +149,30 @@ if __name__ == "__main__":
     print('M: ideal gates count:', qcP.count_ops())
     if args.verb>2 or nq_addr<4:  print(qcrankObj.circuit.draw())
 
+
+    assert 'ideal' not  in args.backend
     
+    # ------  construct backend.run() because IQM does not support Qiskit Sampler()------
+
+
+    qpuName=args.backend
+    print('M: access IQM backend ...',qpuName)
+    provider=IQMProvider(url="https://cocos.resonance.meetiqm.com/"+qpuName)
+    backend = provider.get_backend()
+    print('got BCKN:',backend.name,qpuName)
+    
+    qcT = transpile_to_IQM(qcP, backend)        
+    qcrankObj.circuit=qcT  # pass transpiled parametric circuit back
+    cxDepth=qcT.depth(filter_function=lambda x: x.operation.name == 'cz')
+    print('.... PARAMETRIZED Transpiled (%s) CIRCUIT .............., cx-depth=%d'%(backend.name,cxDepth))
+    print('M: transpiled gates count:', qcT.count_ops())
+    if args.verb>2 or nq_addr<2:  print(qcT.draw('text', idle_wires=False))
+                
+    circ_depth_aziz(qcP,'ideal')
+    circ_depth_aziz(qcT,'transpiled')
+    harvest_circ_transpMeta(qcT,expMD,backend.name)
+
+        
     # -------- bind the data to parametrized circuit  -------
     qcrankObj.bind_data(expD['inp_udata'])
     
@@ -155,46 +184,26 @@ if __name__ == "__main__":
         print(qcEL[0].draw())
         
     print('M:  %d circuits with %d qubits are ready'%(nCirc,nqTot))
-
+    if args.verb>1: print('circ commands:\n',qcEL[0].get_commands())
+      
     if not args.executeCircuit:
         pprint(expMD)
         print('\nNO execution of circuit, use -E to execute the job\n')
         exit(0)
-
-    print('access IQM backend ...')
-    # os.environ["IQM_TOKEN"] is set already
-    provider=IQMProvider(url="https://cocos.resonance.meetiqm.com/garnet")
-    backend = provider.get_backend()
-
-    print('got backend:',backend.name)
-
-    qcT = transpile(qcEL[0], backend)
-
-    print(qcT.draw('text', idle_wires=False))
-    print('M: transpiled,  gates count:',qcT.count_ops())
-    circ_depth_aziz(qcT,'transpiled')
-    ddd
         
     # ----- submission ----------
     numShots=expMD['submit']['num_shots']
-    print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcEL[0].n_qubits,numShots,args.backend))
+    print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcEL[0].num_qubits,numShots,args.backend))
 
-    rrr
-    #1qnx.login_with_credentials()
-    project = qnx.projects.get_or_create(name="qcrank-feb-15")
-    qnx.context.set_active_project(project)
+  
+    job = backend.run(qcEL, shots=args.numShot)
 
+    harvest_submitMeta(job,expMD,args) 
     
-    crefL=push_circ_to_nexus(qcTketL,expMD)
-    ccrefL,devConf=compile_qtuum_circuits(crefL,expMD)
-
-    #.... execution     
-    submit_qtuum__circuits(ccrefL,devConf,expMD)
-
     #...... WRITE  OUTPUT .........
-    outF=os.path.join(outPath,expMD['short_name']+'.qtuum.h5')
+    outF=os.path.join(outPath,expMD['short_name']+'.iqm.h5')
     write4_data_hdf5(expD,outF,expMD)
     print('M:end --expName   %s   %s  %s '%(expMD['short_name'],expMD['hash'], args.backend))
-    print('   ./retrieve_qtuum_job.py --expName   %s   \n'%(expMD['short_name'] ))
+    print('   ./retrieve_iqm_job.py --expName   %s   \n'%(expMD['short_name'] ))
 
     

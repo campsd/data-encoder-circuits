@@ -16,7 +16,6 @@ Nexus web API: https://nexus.quantinuum.com/jobs
 ['H1-1SC', 'H1-1E', 'H2-1E', 'H1-1', 'H2-1SC', 'H2-1','ideal']
 
 --backend : selects backend
---fakeNoise  : does nothing, use 'ideal' for noisless backend
 
 Use case:
  ./submit_qtuum_job.py -n 100  -E -i 2
