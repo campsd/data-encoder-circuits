@@ -108,7 +108,7 @@ def harvest_sampler_submitMeta(job,md,args):
     sd['date']=dateT2Str(t1)
     sd['unix_time']=int(time())
     sd['provider']=args.provider
-    print('bbb',args.backend,args.expName)
+    #print('bbb',args.backend,args.expName)
     if args.expName==None:
         # the  6 chars in job id , as handy job identiffier
         md['hash']=sd['job_id'].replace('-','')[3:9] # those are still visible on the IBMQ-web
