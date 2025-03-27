@@ -20,7 +20,8 @@ Use case:
 import sys,os,hashlib
 import numpy as np
 from pprint import pprint
-from time import time, localtime
+from time import time, localtime,mktime
+from datetime import datetime
 
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler 
 from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
@@ -46,6 +47,7 @@ def commandline_parser(backName="aer_ideal",provName="local sim"):
     # .... QCrank speciffic
     parser.add_argument('-q','--numQubits', default=[2,2], type=int,  nargs='+', help='pair: nq_addr nq_data, space separated ')
     parser.add_argument('-i','--numSample', default=10, type=int, help='num of images packed in to the job')
+    parser.add_argument('--rndSeed', default=None, type=int, help='(optional) freezes randominput sequence')
     parser.add_argument("--useCZ", action='store_true', default=False, help="change from CX to CZ entangelemnt")
 
     # .... job running
@@ -81,6 +83,7 @@ def buildPayloadMeta(args):
     pd['num_sample']=args.numSample
     pd['num_qubit']=pd['nq_addr']+pd['nq_data']
     pd['seq_len']=pd['nq_data']*pd['num_addr']
+    pd['rnd_seed']=args.rndSeed
     
     sbm={}
     sbm['num_shots']=args.numShot
@@ -98,7 +101,7 @@ def buildPayloadMeta(args):
 
 
 #...!...!....................
-def harvest_sampler_submitMeta(job,md,args):
+def harvest_submitMeta(job,md,args):
     sd=md['submit']
     sd['job_id']=job.job_id()
     backN=args.backend
@@ -120,14 +123,16 @@ def harvest_sampler_submitMeta(job,md,args):
         md['short_name']=args.expName
 
 #...!...!....................
-def construct_random_inputs(md,verb=1):
+def construct_random_inputs(md,verb=1, seed=None):
     pmd=md['payload']
     num_addr=pmd['num_addr']
     nq_data=pmd['nq_data']
     n_img=pmd['num_sample']
 
     # generate float random data
+    np.random.seed(pmd['rnd_seed'])  # Set a fixed seed for reproducibility, None gives alwasy random 
     data_inp = np.random.uniform(-1, 1., size=(num_addr, nq_data, n_img))
+    #print('data_inp sample:\n',data_inp[:3,:3,:2]); kk
     if verb>2:
         print('input data=',data_inp.shape,repr(data_inp))
     bigD={'inp_udata': data_inp}
@@ -139,24 +144,36 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
     pmd=md['payload']
     qa={}
     jobRes=job.result()
-    #counts=jobRes[0].data.c.get_counts()
-    
+   
+    def iso_to_localtime(iso_string):
+        dt = datetime.strptime(iso_string[:-1], "%Y-%m-%dT%H:%M:%S.%f")  # Remove 'Z' and parse
+        return localtime(mktime(dt.timetuple()))
+
+    jobMetr=job.metrics()
+    print('tt',jobMetr['timestamps']['running'])
+    print('uu',iso_to_localtime((jobMetr['timestamps']['running'])))
+
     if T0!=None:  # when run locally
         elaT=time()-T0
         print(' job done, elaT=%.1f min'%(elaT/60.))
         qa['running_duration']=elaT
     else:
-        jobMetr=job.metrics()
-        #print('HSR:jobMetr:',jobMetr)
-        qa['timestamp_running']=jobMetr['timestamps']['running']
-        qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
-        qa['all_circ_executions']=jobMetr['executions']
+        try:
+            jobMetr=job.metrics()
+            #print('HSR:jobMetr:',jobMetr)
+            #print('tt',jobMetr['timestamps']['running'])
+            t1=iso_to_localtime((jobMetr['timestamps']['running']))
+            qa['timestamp_running']=dateT2Str(t1)
+            qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
+            qa['all_circ_executions']=jobMetr['executions']
         
-        if jobMetr['num_circuits']>0:
-            qa['one_circ_depth']=jobMetr['circuit_depths'][0]
-        else:
-            qa['one_circ_depth']=None
-    
+            if jobMetr['num_circuits']>0:
+                qa['one_circ_depth']=jobMetr['circuit_depths'][0]
+            else:
+                qa['one_circ_depth']=None
+        except:
+            print('no runtime meat for ',type(job))
+                
     #1pprint(jobRes[0])
     nCirc=len(jobRes)  # number of circuit in the job
     jstat=str(job.status())
@@ -210,7 +227,6 @@ if __name__ == "__main__":
             qpy.dump(qc, fd)
         print('\nSaved circ1:',circF)
         exit(0)
-
     
     # ------  construct sampler(.) job ------
     runLocal=True  # ideal or fake backend
@@ -233,7 +249,6 @@ if __name__ == "__main__":
             backend = service.backend(args.backend)  # overwrite ideal-backend
             print('use true HW backend =', backend.name)          
             runLocal=False
-            outPath=os.path.join(args.basePath,'jobs')
         qcT =  transpile(qcP, backend,optimization_level=3)
         qcrankObj.circuit=qcT  # pass transpiled parametric circuit back
         cxDepth=qcT.depth(filter_function=lambda x: x.operation.name == 'cz')
@@ -284,7 +299,7 @@ if __name__ == "__main__":
     T0=time()
     job = sampler.run(tuple(qcEL))
    
-    harvest_sampler_submitMeta(job,expMD,args)    
+    harvest_submitMeta(job,expMD,args)    
     if args.verb>1: pprint(expMD)
     
     if runLocal:

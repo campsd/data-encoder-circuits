@@ -49,7 +49,7 @@ def plot_histogram(ax, res_data):
     N=res_data.shape[0]
     se_s=std/np.sqrt(2*(N-1))
     ax.axvline(mean, color='r', linestyle='dashed', linewidth=1)
-    txt='Mean: %.3f\nStd: %0.3f +/- %0.3f'%(mean,std,se_s)
+    txt='Mean: %.3f\nRMSE: %0.3f +/- %0.3f'%(mean,std,se_s)
     ax.annotate(txt, xy=(0.05, 0.85),c='r', xycoords='axes fraction')
     ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
 
@@ -63,6 +63,7 @@ def summary_column(md):
     pom=md['postproc']
     txt=md['short_name']
     txt+='\nback: %s'%smd['backend']
+    txt+='\n'+md['job_qa']['timestamp_running']
     txt+='\nshots/addr : %d'%(smd['num_shots']/pmd['num_addr'])
     txt+='\nshots/img : %d k'%(smd['num_shots']/1000)
     txt+='\nnum sample %d'%(pmd['num_sample'])
@@ -73,8 +74,9 @@ def summary_column(md):
     txt+='\nnum 2q gates: %d'%tmd['2q_gate_count']
     txt+='\n2q gates depth: %d'%tmd['2q_gate_depth']
 
-    #txt+='\nhwCalib: %s'%pom['hw_calib']
-    #if pom['hw_calib']: txt+=' fac: %.2f'%pom['ampl_fact']
+    txt+='\nhwCal: %s'%pom['hw_calib']
+    if pom['hw_calib']: txt+=': %.2f'%pom['ampl_fact']
+    
     return txt
     if 'noise_model' in smd:
         txt+='\nfake : %s'%(smd['noise_model'])       
