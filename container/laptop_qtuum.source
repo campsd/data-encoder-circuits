@@ -2,8 +2,8 @@
 
 # first load my Quantinumm credentials 
 echo load my QTUUM creds
-source /Users/balewski/.ssh/qtuum.creds  talita
-#env |grep MY_QTUUM  # activate to see the creds
+source /Users/balewski/.ssh/qtuum.creds bert 
+env |grep MY_QTUUM  # activate to see the creds
 
 IMG=balewski/ubu24-qtuum:p1g
 IMG=balewski/ubu24-qtuum:p1h

@@ -5,6 +5,8 @@ __email__ = "janstar1122@gmail.com"
 '''
 merge yields from many jobs as one hd5
 
+ ./merge_shots.py --dataPath $basePath/meas --expName qcr3a+12d_h1-1e_1  --numJobs 3
+
 '''
 
 import os,sys
@@ -25,14 +27,17 @@ def get_parser():
 
     parser.add_argument("--dataPath",default='out/meas',help=' input & output dir')
                         
-    parser.add_argument('-e',"--expName",  default=['exp_62a2'],  nargs='+',help='list of retrieved experiments, blank separated')
+    parser.add_argument('-e',"--expName",  default=['exp_62a2_*'],help='list of retrieved experiments, blank separated')
 
+    parser.add_argument('-k','--numJobs', default=2, type=int, help='num jobs, index will replace *')
+    
     args = parser.parse_args()
     # make arguments  more flexible
  
     print( 'myArg-program:',parser.prog)
     for arg in vars(args):  print( 'myArg:',arg, getattr(args, arg))
     assert os.path.exists(args.dataPath)
+    assert '*' in args.expName
     return args
 
 #...!...!.................... merge two dictionaries that have bitstrings as keys and counts
@@ -40,8 +45,7 @@ def merge_bitstring_dicts(a, b):
     return {k: a.get(k, 0) + b.get(k, 0) for k in set(a) | set(b)}
 
 #...!...!.................... 
-def add_experiment(ie,outD,outMD):
-    inpF=args.expName[ie]+'.meas.h5'
+def add_experiment(inpF,outD,outMD):
     #print('A: %d %s'%(ie,inpF))
     expD,expMD=read4_data_hdf5(os.path.join(args.dataPath,inpF),verb=0)
     smd=expMD['submit']
@@ -105,15 +109,16 @@ def setup_containers(expD,expMD,numJobs):
 if __name__=="__main__":
     args=get_parser()
 
-    numJobs=len(args.expName)
-    inpF=args.expName[0]+'.meas.h5'
-    expD,expMD=read4_data_hdf5(os.path.join(args.dataPath,inpF))
+    
+    inpFT=args.expName+'.meas.h5'
+    
+    expD,expMD=read4_data_hdf5(os.path.join(args.dataPath,inpFT.replace('*','1')))
     if args.verb>1: pprint(expMD)
-    outD,outMD=setup_containers(expD,expMD,numJobs)
+    outD,outMD=setup_containers(expD,expMD,args.numJobs)
 
     # append other experiments
-    for ie in range(1,numJobs):
-        add_experiment(ie,outD,outMD)
+    for ie in range(2,args.numJobs+1):
+        add_experiment(inpFT.replace('*','%d'%ie),outD,outMD)
 
     print('M:merge_shots info');pprint(outMD['merge_shots'])
     if args.verb>1: pprint(outMD)

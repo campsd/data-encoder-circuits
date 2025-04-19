@@ -27,6 +27,29 @@ sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits.ParametricQCrankV2 import   qcrank_reco_from_yields
 
 
+#...!...!....................
+def execTimeConverter(data):
+       from datetime import datetime
+       import pytz
+       # Extract the Annotations.created field
+       timestamp1 = data.get("annotations", {}).get("created", "Not found")
+        
+       # Print the extracted date
+       #print("Annotations.created:", timestamp1)
+       # Parse the timestamp as a datetime object with UTC timezone
+       dt_utc = datetime.fromisoformat(timestamp1)
+       
+       # Define the California timezone (PDT/PST)
+       california_tz = pytz.timezone("America/Los_Angeles")
+        
+       # Convert the UTC time to California time
+       dt_cal = dt_utc.astimezone(california_tz)
+       # Convert the datetime object to the desired format
+       my_timestamp = dt_cal.strftime("%Y%m%d_%H%M%S_%Z")
+       #print('ttt',my_timestamp)
+       return my_timestamp
+
+#...!...!....................
 def retrieve_qtuum_job(md,bigD):
     #pprint(md)
     sbm=md['submit']
@@ -53,6 +76,7 @@ def retrieve_qtuum_job(md,bigD):
     qa={}
     qa['status']=str(stat)
     qa['num_circ']=nCirc
+    qa['timestamp_running']=execTimeConverter(data)
 
     countsL=[None]*nCirc
     for ic in range(nCirc):

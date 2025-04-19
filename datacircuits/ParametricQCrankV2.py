@@ -44,12 +44,24 @@ sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits import qcrank
 
 #...!...!....................
+def print_latex(circ):
+    print(circ)
+    from qiskit.visualization import circuit_drawer
+    # Generate LaTeX source for the circuit
+    latex_source = circuit_drawer(circ, output='latex_source')
+                
+    # Print or save the LaTeX source
+    print(latex_source)
+    exit(0)
+
+#...!...!....................
 class ParametricQCrankV2():
 #...!...!....................
     def __init__(self, nq_addr, nq_data,
                  measure: bool = True,
                  barrier: bool = True,
-                 useCZ: bool =  False  # default uses CX gates
+                 useCZ: bool =  False,  # default uses CX gates
+                 mockCirc: bool = False # Ry arg is left out and Latex vesion is printed to stdout
                  ):
         '''Initializes a parametrized QCRANK circuit with nq_addr address qubits and
         nq_data data qubits. The total number of qubits in the circuit is nq_addr + nq_data.
@@ -79,6 +91,20 @@ class ParametricQCrankV2():
         num_q=nq_addr + nq_data
         self.circuit = QuantumCircuit(num_q,num_q)
 
+       
+        if mockCirc: 
+            from qiskit.quantum_info import Operator
+            # Define the custom mockRy method
+            def mockRy(self, pars, qubit):
+                # Create an identity unitary operator (mock RY)
+                unitary = Operator([[1, 0], [0, 1]])
+                # Append the custom unitary to the circuit
+                self.unitary(unitary, [qubit], label="Ry")
+
+            # Monkey-patch the method to the QuantumCircuit class
+            QuantumCircuit.ry = mockRy
+            
+        
         # Apply Hadamard gates (diffusion) to all address qubits
         for i in range(nq_addr):   self.circuit.h(i)
         if barrier:   self.circuit.barrier()
@@ -108,7 +134,7 @@ class ParametricQCrankV2():
             for i in range(num_q):
                 j=num_q-1-i  # Reverse qubit order to match Qiskit's little-endian convention
                 self.circuit.measure(i,j)
-            
+        if  mockCirc: print_latex(self.circuit)
             
 #...!...!....................
     def bind_data(self, data):

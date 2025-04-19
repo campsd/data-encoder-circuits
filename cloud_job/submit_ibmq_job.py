@@ -21,7 +21,7 @@ import sys,os,hashlib
 import numpy as np
 from pprint import pprint
 from time import time, localtime,mktime
-from datetime import datetime
+from datetime import datetime, timezone
 
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler 
 from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
@@ -49,6 +49,8 @@ def commandline_parser(backName="aer_ideal",provName="local sim"):
     parser.add_argument('-i','--numSample', default=10, type=int, help='num of images packed in to the job')
     parser.add_argument('--rndSeed', default=None, type=int, help='(optional) freezes randominput sequence')
     parser.add_argument("--useCZ", action='store_true', default=False, help="change from CX to CZ entangelemnt")
+    parser.add_argument("--mockCirc", action='store_true', default=False, help="changes Ry to make circ look nice but non-executable")
+
 
     # .... job running
     parser.add_argument('-n','--numShot',type=int,default=2000, help="shots per circuit")
@@ -139,30 +141,53 @@ def construct_random_inputs(md,verb=1, seed=None):
  
     return bigD
 
+def to_localtime(ts):
+    """
+    Convert either:
+      - a datetime (assumed UTC) → naive local datetime
+      - an ISO‑format string (with or without trailing 'Z') → naive local datetime
+    """
+    if isinstance(ts, datetime):
+        # already a datetime → assume UTC
+        dt_utc = ts.replace(tzinfo=timezone.utc)
+    else:
+        # strip any trailing 'Z' and parse
+        s = ts.rstrip("Z")
+        dt_utc = datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
+
+    # convert to local zone and drop tzinfo
+    return dt_utc.astimezone().replace(tzinfo=None)
+
 #...!...!....................
 def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
     pmd=md['payload']
     qa={}
     jobRes=job.result()
    
-    def iso_to_localtime(iso_string):
+    def XXiso_to_localtime(iso_string):
         dt = datetime.strptime(iso_string[:-1], "%Y-%m-%dT%H:%M:%S.%f")  # Remove 'Z' and parse
         return localtime(mktime(dt.timetuple()))
 
     jobMetr=job.metrics()
-    print('tt',jobMetr['timestamps']['running'])
-    print('uu',iso_to_localtime((jobMetr['timestamps']['running'])))
-
+    
+    if 0:  # testing conversion for HW
+        raw = jobMetr['timestamps']['running']
+        print('raw:', raw)
+        print('local:', to_localtime(raw))
+    
+    
     if T0!=None:  # when run locally
         elaT=time()-T0
         print(' job done, elaT=%.1f min'%(elaT/60.))
         qa['running_duration']=elaT
+        qa['timestamp_running']=dateT2Str(localtime() )
+
     else:
         try:
             jobMetr=job.metrics()
             #print('HSR:jobMetr:',jobMetr)
             #print('tt',jobMetr['timestamps']['running'])
-            t1=iso_to_localtime((jobMetr['timestamps']['running']))
+            t1=to_localtime((jobMetr['timestamps']['running']))
             qa['timestamp_running']=dateT2Str(t1)
             qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
             qa['all_circ_executions']=jobMetr['executions']
@@ -211,7 +236,7 @@ if __name__ == "__main__":
          
     # generate parametric circuit
     nq_addr, nq_data = args.numQubits
-    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ,measure=True,barrier=not args.noBarrier )
+    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ,measure=True,barrier=not args.noBarrier, mockCirc=args.mockCirc )
         
     qcP=qcrankObj.circuit
     cxDepth=qcP.depth(filter_function=lambda x: x.operation.name == 'cz')
@@ -224,7 +249,7 @@ if __name__ == "__main__":
         from qiskit import qpy
         circF='./qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
         with open(circF, 'wb') as fd:
-            qpy.dump(qc, fd)
+            qpy.dump(qcP, fd)
         print('\nSaved circ1:',circF)
         exit(0)
     

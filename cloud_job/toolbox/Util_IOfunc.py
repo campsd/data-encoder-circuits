@@ -3,10 +3,7 @@ __email__ = "janstar1122@gmail.com"
 
 import numpy as np
 import time, os
-#import ruamel.yaml  as yaml
 import yaml
-#import warnings
-#warnings.simplefilter('ignore', yaml.error.MantissaNoDotYAML1_1Warning)
 
 from pprint import pprint
 import csv

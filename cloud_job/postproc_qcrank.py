@@ -115,7 +115,18 @@ if __name__=="__main__":
                     
     inpF=args.expName+'.meas.h5'
     expD,expMD=read4_data_hdf5(os.path.join(args.dataPath,inpF))
-    
+
+    if 0: # fix old code
+        import json
+        rjmJ=expMD['submit']['job_ref_json']
+        
+        # The given JSON-like string (using triple quotes for readability)
+        
+        # Parse the JSON string
+        parsed_data = json.loads(rjmJ)
+        expMD['job_qa']['timestamp_running']=execTimeConverter(parsed_data)
+       
+        
     if args.verb>=2:
         print('M:expMD:');  pprint(expMD)
         if args.verb>=3:

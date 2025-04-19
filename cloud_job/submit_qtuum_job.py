@@ -170,7 +170,7 @@ if __name__ == "__main__":
     numShots=expMD['submit']['num_shots']
     print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcTketL[0].n_qubits,numShots,args.backend))
 
-    #1qnx.login_with_credentials()
+    #qnx.login_with_credentials()
     project = qnx.projects.get_or_create(name="qcrank-feb-15")
     qnx.context.set_active_project(project)
    
