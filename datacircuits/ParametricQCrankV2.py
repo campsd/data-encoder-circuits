@@ -89,8 +89,10 @@ class ParametricQCrankV2():
         
         # Generate circuit
         num_q=nq_addr + nq_data
-        self.circuit = QuantumCircuit(num_q,num_q)
-
+        if measure:
+            self.circuit = QuantumCircuit(num_q,num_q)
+        else:  # only qubit wires, no classical wires
+            self.circuit = QuantumCircuit(num_q)
        
         if mockCirc: 
             from qiskit.quantum_info import Operator
@@ -197,25 +199,25 @@ class ParametricQCrankV2():
 #...!...!....................
 def qcrank_reco_from_yields( countsL,nq_addr,nq_data):
         '''Reconstructs data from measurement counts.
-
         Args:
             countsL: list
-                List of measurement counts from the instantiated circuits.
-
+                List of measurement counts from the instantiated circuits.        
         Returns:
             rec_udata: numpy array
                 Reconstructed un-normalized data with shape 
                 (num_addr, nq_data, number of circuits).
         '''
         addrBitsL = [nq_data + i for i in range(nq_addr)]
+        print('QRFY: nq_addr,nq_data=',nq_addr,nq_data,' addrBitsL:',addrBitsL)
         nCirc = len(countsL)
         num_addr=1<<nq_addr
         rec_udata = np.zeros((num_addr, nq_data, nCirc))  # To match input indexing
         rec_udataErr = np.zeros_like(rec_udata)       
         for ic in range(nCirc):
             counts = countsL[ic]
+            #print('ic:',ic,counts)
             for jd in range(nq_data):
-                ibit = nq_data - 1 - jd
+                ibit = nq_data - 1 - jd                
                 valV,valErV = marginalize_qcrank_EV(addrBitsL, counts, dataBit=ibit)
                 rec_udata[:, jd, ic] = valV
                 rec_udataErr[:, jd, ic] = valErV
@@ -228,7 +230,7 @@ def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
     # ... marginal distributions for 2 data qubits, for 1 circuit
     assert dataBit not in addrBitsL
     bitL=[dataBit]+addrBitsL
-    #print('MQCEV bitL:',bitL)
+    #print('MQCEV bitL:',bitL,len(addrBitsL))
     probs=marginal_distribution(probsB,bitL)
     
     #.... for each address comput probabilities,stat error, EV, EV_err 
@@ -239,11 +241,12 @@ def marginalize_qcrank_EV(  addrBitsL, probsB, dataBit):
     fstr='0'+str(nq_addr)+'b' 
     for j in range(seq_len):
         mbit=format(j,fstr)
+        if nq_addr==0: mbit=''  # special case , when no address qubits are measured
         mbit0=mbit+'0'; mbit1=mbit+'1'
         m1=probs[mbit1] if mbit1 in probs else 0
         m0=probs[mbit0] if mbit0 in probs else 0
         m01=m0+m1
-        #print(j,mbit,'sum=',m01)
+        #print('j:',j,mbit,'sum=',m01)
         if m01>0 :
             p=m1/m01
             pErr=np.sqrt( p*(1-p)/m01) if m0*m1>0 else 1/m01

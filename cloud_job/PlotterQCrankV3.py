@@ -69,7 +69,7 @@ def summary_column(md):
     txt+='\nnum sample %d'%(pmd['num_sample'])
     txt+='\nsample size: %d'%(pmd['seq_len'])
     txt+='\nnum addr: %d'%pmd['num_addr']
-    txt+='\nqubits: %d'%pmd['num_qubit']
+    txt+='\nqubits: %d'%len(tmd['phys_qubits'])
     if 'ibm' in smd['backend']:  txt+='  RC: %r'%smd['random_compilation']
     txt+='\nnum 2q gates: %d'%tmd['2q_gate_count']
     txt+='\n2q gates depth: %d'%tmd['2q_gate_depth']

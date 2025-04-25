@@ -141,22 +141,6 @@ def construct_random_inputs(md,verb=1, seed=None):
  
     return bigD
 
-def to_localtime(ts):
-    """
-    Convert either:
-      - a datetime (assumed UTC) → naive local datetime
-      - an ISO‑format string (with or without trailing 'Z') → naive local datetime
-    """
-    if isinstance(ts, datetime):
-        # already a datetime → assume UTC
-        dt_utc = ts.replace(tzinfo=timezone.utc)
-    else:
-        # strip any trailing 'Z' and parse
-        s = ts.rstrip("Z")
-        dt_utc = datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
-
-    # convert to local zone and drop tzinfo
-    return dt_utc.astimezone().replace(tzinfo=None)
 
 #...!...!....................
 def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
@@ -164,17 +148,11 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
     qa={}
     jobRes=job.result()
    
-    def XXiso_to_localtime(iso_string):
+    def iso_to_localtime(iso_string):
         dt = datetime.strptime(iso_string[:-1], "%Y-%m-%dT%H:%M:%S.%f")  # Remove 'Z' and parse
         return localtime(mktime(dt.timetuple()))
 
-    jobMetr=job.metrics()
-    
-    if 0:  # testing conversion for HW
-        raw = jobMetr['timestamps']['running']
-        print('raw:', raw)
-        print('local:', to_localtime(raw))
-    
+    jobMetr=job.metrics()    
     
     if T0!=None:  # when run locally
         elaT=time()-T0
@@ -183,21 +161,18 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
         qa['timestamp_running']=dateT2Str(localtime() )
 
     else:
-        try:
-            jobMetr=job.metrics()
-            #print('HSR:jobMetr:',jobMetr)
-            #print('tt',jobMetr['timestamps']['running'])
-            t1=to_localtime((jobMetr['timestamps']['running']))
-            qa['timestamp_running']=dateT2Str(t1)
-            qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
-            qa['all_circ_executions']=jobMetr['executions']
+        jobMetr=job.metrics()
+        #print('HSR:jobMetr:',jobMetr)
+        #print('tt',jobMetr['timestamps']['running'])
+        t1=iso_to_localtime((jobMetr['timestamps']['running']))
+        qa['timestamp_running']=dateT2Str(t1)
+        qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
+        qa['all_circ_executions']=jobMetr['executions']
         
-            if jobMetr['num_circuits']>0:
-                qa['one_circ_depth']=jobMetr['circuit_depths'][0]
-            else:
-                qa['one_circ_depth']=None
-        except:
-            print('no runtime meat for ',type(job))
+        if jobMetr['num_circuits']>0:
+            qa['one_circ_depth']=jobMetr['circuit_depths'][0]
+        else:
+            qa['one_circ_depth']=None
                 
     #1pprint(jobRes[0])
     nCirc=len(jobRes)  # number of circuit in the job
