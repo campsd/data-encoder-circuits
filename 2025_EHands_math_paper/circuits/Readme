@@ -1,0 +1,5 @@
+In the directory, there are  circuits computing various polynomials as depicted in Figure 2 of the EHands-math paper. Each file contains two circuits: one representing the ideal circuit and the other transpiled for the IBM QPU. The read_qpy_circ.py script demonstrates how to read and display these circuits.
+
+All circuits involve a parametric input theta, which should be substituted with arccos(x). Here, x is within the range [-1, 1] and represents the input value used to compute the polynomials.
+
+The value of the polynomial is determined by the expectation value of the single measured qubit, calculated as 1 - 2p, where p denotes the probability of measuring the qubit in the state 1.
