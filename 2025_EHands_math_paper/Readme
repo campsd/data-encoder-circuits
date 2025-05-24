@@ -1,0 +1,5 @@
+Supporting Material for EHands-math Paper
+
+circuits/: This directory includes circuits that compute various polynomials depicted in Figure 2.
+experiments/: Contains raw bitstring probabilities for selected experiments shown in Figure 2.
+
