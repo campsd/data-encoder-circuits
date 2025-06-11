@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler 
 from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
 
-from toolbox.Util_IOfunc import dateT2Str
+from toolbox.Util_IOfunc import dateT2Str, iso_to_localtime
 from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
 from toolbox.Util_QiskitV2 import  circ_depth_aziz, harvest_circ_transpMeta
 from qiskit_aer import AerSimulator
@@ -55,7 +55,11 @@ def commandline_parser(backName="aer_ideal",provName="local sim"):
     # .... job running
     parser.add_argument('-n','--numShot',type=int,default=2000, help="shots per circuit")
     parser.add_argument('-b','--backend',default=backName, help="tasks")
-    parser.add_argument( "--rndComp", action='store_true', default=False, help="request randomized compilation , HW only ")
+    parser.add_argument('--transpSeed',default=42, type=int, help="random seed for transpiler")
+    parser.add_argument( "--useRC", action='store_true', default=False, help="enable randomized compilation , HW only ")
+    parser.add_argument( "--useDD", action='store_true', default=False, help="enable Dynamical Decoupling , HW only ")
+
+
     parser.add_argument( "-B","--noBarrier", action='store_true', default=False, help="remove all bariers from the circuit ")
     parser.add_argument( "-E","--executeCircuit", action='store_true', default=False, help="may take long time, test before use ")
     parser.add_argument( "-e","--exportQPY", action='store_true', default=False, help="exprort parametrized circuit as QPY and metaData")
@@ -90,14 +94,18 @@ def buildPayloadMeta(args):
     sbm={}
     sbm['num_shots']=args.numShot
     pom={}
-    trm={}
-
+    
+    tmd={}
+    tmd['transp_seed']=args.transpSeed
+    
     if 'ibm' in args.backend: 
-        sbm['random_compilation']= args.rndComp
+        sbm['random_compilation']= args.useRC
+        sbm['dynamical_decoupling']= args.useDD
     else:
         sbm['random_compilation']=False
-    
-    md={ 'payload':pd, 'submit':sbm ,'transpile':trm, 'postproc':pom}
+        sbm['dynamical_decoupling']=False
+
+    md={ 'payload':pd, 'submit':sbm ,'transpile':tmd, 'postproc':pom}
     if args.verb>1:  print('\nBMD:');pprint(md)
     return md
 
@@ -117,7 +125,10 @@ def harvest_submitMeta(job,md,args):
     if args.expName==None:
         # the  6 chars in job id , as handy job identiffier
         md['hash']=sd['job_id'].replace('-','')[3:9] # those are still visible on the IBMQ-web
-        tag=args.backend.split('_')[0]
+        if args.provider=='IBMQ_cloud':
+            tag=args.backend.split('_')[1]
+        if args.provider=="IQM_cloud":
+            tag=args.backend.split('_')[0]
         md['short_name']='%s_%s'%(tag,md['hash'])
     else:
         myHN=hashlib.md5(os.urandom(32)).hexdigest()[:6]
@@ -148,10 +159,6 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
     qa={}
     jobRes=job.result()
    
-    def iso_to_localtime(iso_string):
-        dt = datetime.strptime(iso_string[:-1], "%Y-%m-%dT%H:%M:%S.%f")  # Remove 'Z' and parse
-        return localtime(mktime(dt.timetuple()))
-
     jobMetr=job.metrics()    
     
     if T0!=None:  # when run locally
@@ -214,7 +221,7 @@ if __name__ == "__main__":
     qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ,measure=True,barrier=not args.noBarrier, mockCirc=args.mockCirc )
         
     qcP=qcrankObj.circuit
-    cxDepth=qcP.depth(filter_function=lambda x: x.operation.name == 'cz')
+    cxDepth=qcP.depth(filter_function=lambda x: x.operation.name == 'cx')
     print('.... PARAMETRIZED IDEAL CIRCUIT .............., cx-depth=%d'%cxDepth)
     nqTot=qcP.num_qubits
     print('M: ideal gates count:', qcP.count_ops())
@@ -249,7 +256,16 @@ if __name__ == "__main__":
             backend = service.backend(args.backend)  # overwrite ideal-backend
             print('use true HW backend =', backend.name)          
             runLocal=False
-        qcT =  transpile(qcP, backend,optimization_level=3)
+        if 0:  # special case
+            print('\nM: scan over transpiler  for %s :'%args.backend)            
+            for i in range(10):
+                seed=args.transpSeed+i
+                qcT= transpile(qcP, backend=backend, optimization_level=3, seed_transpiler=seed)
+                layout=qcT._layout.final_index_layout(filter_ancillas=True)
+                print('seed=%d  qubits=%s '%(seed,layout))
+            exit(0)
+
+        qcT =  transpile(qcP, backend,optimization_level=3, seed_transpiler=args.transpSeed)
         qcrankObj.circuit=qcT  # pass transpiled parametric circuit back
         cxDepth=qcT.depth(filter_function=lambda x: x.operation.name == 'cz')
         print('.... PARAMETRIZED Transpiled (%s) CIRCUIT .............., cx-depth=%d'%(backend.name,cxDepth))
@@ -260,10 +276,9 @@ if __name__ == "__main__":
     circ_depth_aziz(qcP,'ideal')
     circ_depth_aziz(qcT,'transpiled')
     harvest_circ_transpMeta(qcT,expMD,backend.name)
+    print('M: run on backend:',backend.name,outPath)
     assert os.path.exists(outPath)
    
-    print('M: run on backend:',backend.name)
-
     # -------- bind the data to parametrized circuit  -------
     qcrankObj.bind_data(expD['inp_udata'])
     
@@ -272,10 +287,10 @@ if __name__ == "__main__":
     nCirc=len(qcEL)
     if args.verb>2 :
         print(f'.... FIRST INSTANTIATED CIRCUIT .............. of {nCirc}')
-        print(qcEL[0].draw())
+        print(qcEL[0].draw('text', idle_wires=False))
         
     print('M: execution-ready %d circuits with %d qubits backend=%s'%(nCirc,nqTot,backend.name))
-                            
+        
     if not args.executeCircuit:
         pprint(expMD)
         print('\nNO execution of circuit, use -E to execute the job\n')
@@ -288,12 +303,18 @@ if __name__ == "__main__":
     options = SamplerOptions()
     options.default_shots=numShots
     
-    if expMD['submit']['random_compilation']: #  works only for real HW
+    if expMD['submit']['random_compilation']: #  RC works only for real HW
         options.twirling.enable_gates = True
         options.twirling.enable_measure = True
         options.twirling.num_randomizations=60
         print('M: enabled RandComp')
 
+    if expMD['submit']['dynamical_decoupling']: #  DD works only for real HW
+        options.dynamical_decoupling.enable = True
+        options.dynamical_decoupling.sequence_type = 'XX'
+        options.dynamical_decoupling.extra_slack_distribution = 'middle'
+        options.dynamical_decoupling.scheduling_method = 'alap'
+        print('M: enabled DD')
 
     sampler = Sampler(mode=backend, options=options)
     T0=time()
@@ -308,13 +329,12 @@ if __name__ == "__main__":
         #...... WRITE  MEAS OUTPUT .........
         outF=os.path.join(outPath,expMD['short_name']+'.meas.h5')
         write4_data_hdf5(expD,outF,expMD)        
-        print('   ./postproc_qcrank.py  --expName   %s   -p a    -Y\n'%(expMD['short_name']))
+        print('   ./postproc_qcrank.py  --basePath  $basePath  --expName   %s   -p a    -Y\n'%(expMD['short_name']))
     else:
         #...... WRITE  SUBMIT OUTPUT .........
         outF=os.path.join(outPath,expMD['short_name']+'.ibm.h5')
         write4_data_hdf5(expD,outF,expMD)
-        print('M:end --expName   %s   %s  %s  jid=%s'%(expMD['short_name'],expMD['hash'],backend.name ,expMD['submit']['job_id']))
-        print('   ./retrieve_ibmq_job.py --expName   %s   \n'%(expMD['short_name'] ))
+        print('   ./retrieve_ibmq_job.py  --basePath  $basePath --expName   %s   \n'%(expMD['short_name'] ))
 
 
 

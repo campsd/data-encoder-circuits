@@ -5,6 +5,7 @@ source ~/.ssh/iqm.creds
 
 #IMG=balewski/ubu24-iqm:p1a
 IMG=balewski/ubu24-iqm:p1i # qiskit 1.1.2, iqm-client 20.17, qiskit-iqm  15.6
+#IMG=balewski/ubu24-iqm:p1k # qiskit 1.1.2, iqm-client 20.17, qiskit-iqm  15.6  WRONG sometimes, drops params
 
 echo launch image $IMG
 echo you are launching Podman image ...  remeber to exit

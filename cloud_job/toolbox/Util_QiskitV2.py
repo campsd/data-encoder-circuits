@@ -35,12 +35,14 @@ def harvest_circ_transpMeta(qc,md,transBackN):
         n1q_g+=opsD[xx]
     
     n2q_g=0
-    for xx in ['cx','cz','ecr']:
+    for xx in ['cx','cz','ecr','move']:
         if xx not in opsD: continue
         n2q_g+=opsD[xx]
     
     #... store results
-    tmd={'num_qubit': nqTot,'phys_qubits':physQubitLayout}
+    tmd=md['transpile']
+    tmd['num_qubit']= nqTot
+    tmd['phys_qubits']=physQubitLayout
     tmd['transpile_backend']=transBackN
 
     tmd['2q_gate_depth']=len2

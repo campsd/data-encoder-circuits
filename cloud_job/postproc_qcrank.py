@@ -150,6 +150,8 @@ if __name__=="__main__":
    
     if 'a' in args.showPlots:
         plot.ehands_accuracy(expD,expMD,figId=fig0)
+    if 'b' in args.showPlots:
+        plot.ehands_accuracy(expD,expMD,figId=fig0,asCol=True)
 
     if 'c' in args.showPlots:
         not_tested

@@ -4,6 +4,7 @@ __email__ = "janstar1122@gmail.com"
 import numpy as np
 import time, os
 import yaml
+from datetime import datetime
 
 from pprint import pprint
 import csv
@@ -101,4 +102,9 @@ def dateT2Str(xT):  # --> string
 def dateStr2T(xS):  #  --> datetime
     yT = time.strptime(xS,"%Y%m%d_%H%M%S_%Z")
     return yT
+
+#...!...!..................
+def iso_to_localtime(iso_string):
+    dt = datetime.strptime(iso_string[:-1], "%Y-%m-%dT%H:%M:%S.%f")  # Remove 'Z' and parse
+    return time.localtime(time.mktime(dt.timetuple()))
 

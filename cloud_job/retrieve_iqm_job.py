@@ -18,10 +18,10 @@ from toolbox.Util_H5io4 import  read4_data_hdf5, write4_data_hdf5
 from iqm.qiskit_iqm import IQMProvider ,IQMJob
 from qiskit.providers.jobstatus import JobStatus
 
-from toolbox.Util_IOfunc import dateT2Str
+from toolbox.Util_IOfunc import dateT2Str, iso_to_localtime
 from datetime import datetime
-
 from time import time, sleep,localtime
+
 from toolbox.Util_QiskitV2 import pack_counts_to_numpy
 
 sys.path.append(os.path.abspath("/qcrank_light"))
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         if jstat==JobStatus.DONE: break
         if jstat==JobStatus.ERROR: exit(99)
         i+=1; sleep(20)
-    print('M: got results', type(job))
+    print('M: got results')#, type(job))
         
     harvest_iqm_results(job,expMD,expD)
    
@@ -154,4 +154,4 @@ if __name__ == "__main__":
     write4_data_hdf5(expD,outF,expMD)
 
 
-    print('   ./postproc_qcrank.py  --expName   %s   -p a    -Y\n'%(expMD['short_name']))
+    print('   ./postproc_qcrank.py  --basePath  $basePath  --expName   %s   -p a    -Y\n'%(expMD['short_name']))

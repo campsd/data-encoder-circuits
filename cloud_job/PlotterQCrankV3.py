@@ -70,7 +70,11 @@ def summary_column(md):
     txt+='\nsample size: %d'%(pmd['seq_len'])
     txt+='\nnum addr: %d'%pmd['num_addr']
     txt+='\nqubits: %d'%len(tmd['phys_qubits'])
-    if 'ibm' in smd['backend']:  txt+='  RC: %r'%smd['random_compilation']
+    if 'ibm' in smd['backend']:
+        txt+='  RC: '+ ('T ' if smd['random_compilation'] else 'F ')
+        useDD=False
+        if 'dynamical_decoupling' in smd: useDD=smd['dynamical_decoupling'] # patch for the past
+        txt+='  DD: '+ ('T' if useDD else 'F')
     txt+='\nnum 2q gates: %d'%tmd['2q_gate_count']
     txt+='\n2q gates depth: %d'%tmd['2q_gate_depth']
 
@@ -91,11 +95,12 @@ class Plotter(PlotterBackbone):
         PlotterBackbone.__init__(self,args)
         
 #...!...!..................
-    def ehands_accuracy(self,bigD,md,figId=1):
+    def ehands_accuracy(self,bigD,md,figId=1, asCol=False):
         #pprint(md)
         pmd=md['payload']
         smd=md['submit']
         tmd=md['transpile']
+        pom=md['postproc']
         if 'truth_rangeLR' in md:
             xrL,xrR=md['truth_rangeLR']
         else:
@@ -104,8 +109,10 @@ class Plotter(PlotterBackbone):
         resMX=md['plot']['resid_max_range']
         
         figId=self.smart_append(figId)        
-        nrow,ncol=1,3
-        fig=self.plt.figure(figId,facecolor='white', figsize=(12,3*nrow))
+        nrow,ncol=1,3 ; xyIn=(12,3)
+        if asCol:
+            nrow,ncol=3,1 ; xyIn=(5,10)
+        fig=self.plt.figure(figId,facecolor='white', figsize=xyIn)
         
         topTit=[ 'job: '+md['short_name'], 'Residual ',smd['backend']]
 
@@ -125,6 +132,9 @@ class Plotter(PlotterBackbone):
         ax.plot(x12,x12,ls='--',c='k',lw=0.7)           
         ax.set_title(topTit[0]) 
 
+        txt='\nhwCal: %s:  %.2f'%(pom['hw_calib'],pom['ampl_fact'])
+        ax.text(0.32, 0.21, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
+        
         #..... right column ....
         ax = self.plt.subplot(nrow,ncol,3)
         res_data = rdata - tdata
@@ -142,7 +152,7 @@ class Plotter(PlotterBackbone):
         ax.grid()
         if 'ibm' in smd['backend']: 
             txt='phys:%s'%(tmd['phys_qubits'])
-            ax.text(0.05, 0.1, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
+            ax.text(0.01, 0.1, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
  
         #..... middle column ....
         ax = self.plt.subplot(nrow,ncol,2) 
@@ -156,7 +166,7 @@ class Plotter(PlotterBackbone):
         # .... decorations ....
         # Overlay the text on top of the plots
         txt=summary_column(md)
-        ax.text(0.88, 0.95, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
+        ax.text(0.80, 0.95, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
 
 #...!...!..................
     def xyz(self,bigD,md,figId=3):

@@ -86,7 +86,7 @@ if __name__ == "__main__":
     write4_data_hdf5(expD,outF,expMD)
 
 
-    print('   ./postproc_qcrank.py  --expName   %s   -p a    -Y\n'%(expMD['short_name']))
+    print('   ./postproc_qcrank.py   --basePath  $basePath --expName   %s   -p a    -Y\n'%(expMD['short_name']))
   
     
     
