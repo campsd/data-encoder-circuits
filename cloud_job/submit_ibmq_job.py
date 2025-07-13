@@ -38,7 +38,7 @@ from datacircuits.ParametricQCrankV2 import  ParametricQCrankV2 as QCrankV2, qcr
 
 import argparse
 #...!...!..................
-def commandline_parser(backName="aer_ideal",provName="local sim"):
+def commandline_parser(backName="aer_ideal",provName="local_sim"):
     parser = argparse.ArgumentParser()
     parser.add_argument("-v","--verb",type=int, help="increase debug verbosity", default=1)
     parser.add_argument("--basePath",default='out',help="head dir for set of experiments")
@@ -129,6 +129,8 @@ def harvest_submitMeta(job,md,args):
             tag=args.backend.split('_')[1]
         if args.provider=="IQM_cloud":
             tag=args.backend.split('_')[0]
+        if args.provider=="local_sim":
+            tag=args.backend.split('_')[1]
         md['short_name']='%s_%s'%(tag,md['hash'])
     else:
         myHN=hashlib.md5(os.urandom(32)).hexdigest()[:6]
@@ -229,7 +231,7 @@ if __name__ == "__main__":
       
     if args.exportQPY:
         from qiskit import qpy
-        circF='./qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
+        circF='out/qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
         with open(circF, 'wb') as fd:
             qpy.dump(qcP, fd)
         print('\nSaved circ1:',circF)
@@ -328,8 +330,9 @@ if __name__ == "__main__":
         print('M: got results')
         #...... WRITE  MEAS OUTPUT .........
         outF=os.path.join(outPath,expMD['short_name']+'.meas.h5')
-        write4_data_hdf5(expD,outF,expMD)        
-        print('   ./postproc_qcrank.py  --basePath  $basePath  --expName   %s   -p a    -Y\n'%(expMD['short_name']))
+        write4_data_hdf5(expD,outF,expMD)
+        print('\n  basePath=%s'%args.basePath)
+        print('  ./postproc_qcrank.py  --basePath  $basePath  --expName   %s   -p a    -Y\n'%(expMD['short_name']))        
     else:
         #...... WRITE  SUBMIT OUTPUT .........
         outF=os.path.join(outPath,expMD['short_name']+'.ibm.h5')

@@ -6,6 +6,7 @@ source ~/.ssh/iqm.creds
 #IMG=balewski/ubu24-iqm:p1a
 IMG=balewski/ubu24-iqm:p1i # qiskit 1.1.2, iqm-client 20.17, qiskit-iqm  15.6
 #IMG=balewski/ubu24-iqm:p1k # qiskit 1.1.2, iqm-client 20.17, qiskit-iqm  15.6  WRONG sometimes, drops params
+IMG=balewski/ubu24-iqm:p1lh # from IQM, Salahedeen, qiskit-ibm-runtime  0.35.0 , iqm-client   28.0.0
 
 echo launch image $IMG
 echo you are launching Podman image ...  remeber to exit
@@ -39,7 +40,8 @@ eval podman run -it \
     --volume /shared_volumes/$BASE_DIR:$BASE_DIR \
     --volume /shared_volumes/$WORK_DIR:$WORK_DIR \
     --volume /shared_volumes/${DATA_VAULT}:${DATA_VAULT} \
-    --workdir $WORK_DIR \
     --user $(id -u):$(id -g) \
+    --workdir $WORK_DIR \
     $JNB_PORT $IMG #/bin/bash
 
+#

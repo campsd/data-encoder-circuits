@@ -69,7 +69,14 @@ if __name__ == "__main__":
     nqTot=qcP.num_qubits
     print('M: ideal gates count:', qcP.count_ops())
     if args.verb>2 or nq_addr<4:  print(qcrankObj.circuit.draw())
-
+    
+    if args.exportQPY:
+        from qiskit import qpy
+        circF='out/qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
+        with open(circF, 'wb') as fd:
+            qpy.dump(qcP, fd)
+        print('\nSaved circ1:',circF)
+        exit(0)
 
     assert 'ideal' not  in args.backend
     
@@ -81,7 +88,7 @@ if __name__ == "__main__":
     backend = provider.get_backend()
     print('got BCKN:',backend.name,qpuName)
     
-    qcT = transpile_to_IQM(qcP, backend)        
+    qcT = transpile_to_IQM(qcP, backend, seed_transpiler=args.transpSeed)        
     qcrankObj.circuit=qcT  # pass transpiled parametric circuit back
     cxDepth=qcT.depth(filter_function=lambda x: x.operation.name in ['cz', 'move'])
     print('.... PARAMETRIZED Transpiled (%s) CIRCUIT .............., cz+move-depth=%d'%(backend.name,cxDepth))

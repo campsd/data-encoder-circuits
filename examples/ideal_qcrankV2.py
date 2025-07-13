@@ -42,7 +42,7 @@ def get_parser():
     parser.add_argument("--useCZ", action='store_true', default=False, help="change from CX to CZ entangelemnt")
     # Qiskit:
     parser.add_argument('-n','--numShots', default=8000, type=int, help='num of shots')
-    parser.add_argument( "-E","--execDecoding", action='store_true', default=False, help="do not decode job output")
+    parser.add_argument( "-E","--execCircuit", action='store_true', default=False, help="do not decode job output")
     parser.add_argument( "-e1","--exportQPY", action='store_true', default=False, help="exprort parametrized circuit as QPY file")
     parser.add_argument( "-e2","--exportQASM", action='store_true', default=False, help="exprort parametrized circuit as QASM file")
   
@@ -96,7 +96,7 @@ if __name__ == "__main__":
    
     if args.exportQPY:
         from qiskit import qpy
-        circF='./qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
+        circF='out/qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
         with open(circF, 'wb') as fd:
             qpy.dump(qc, fd)
         print('\nSaved circ1:',circF)
@@ -124,8 +124,8 @@ if __name__ == "__main__":
     options.default_shots=args.numShots 
 
     sampler = Sampler(mode=backend, options=options)
-    if not args.execDecoding:
-        print('NO evaluation of job output, use -E to execute decoding')
+    if not args.execCircuit:
+        print('NO evaluation of job output, use -E to execute circuit')
         exit(0)
         
     # run the simulation for all images
