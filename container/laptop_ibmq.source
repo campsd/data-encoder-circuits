@@ -6,6 +6,8 @@ source ~/.ssh/ibmq.creds jan
 
 IMG=balewski/ubu24-qiskit:p5  # works
 IMG=balewski/ubu24-qiskit:p6d
+IMG=balewski/ubu24-qiskit:p7c 
+
 
 echo launch image $IMG
 echo you are launching Podman image ...  remeber to exit
