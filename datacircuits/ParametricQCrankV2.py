@@ -61,7 +61,8 @@ class ParametricQCrankV2():
                  measure: bool = True,
                  barrier: bool = True,
                  useCZ: bool =  False,  # default uses CX gates
-                 mockCirc: bool = False # Ry arg is left out and Latex vesion is printed to stdout
+                 mockCirc: bool = False, # Ry arg is left out and Latex vesion is printed to stdout
+                 addressH: bool =True  # applies Hadamard on address qubits
                  ):
         '''Initializes a parametrized QCRANK circuit with nq_addr address qubits and
         nq_data data qubits. The total number of qubits in the circuit is nq_addr + nq_data.
@@ -106,10 +107,9 @@ class ParametricQCrankV2():
             # Monkey-patch the method to the QuantumCircuit class
             QuantumCircuit.ry = mockRy
             
-        
-        # Apply Hadamard gates (diffusion) to all address qubits
-        for i in range(nq_addr):   self.circuit.h(i)
-        if barrier:   self.circuit.barrier()
+        if addressH:        # Apply Hadamard gates (diffusion) to all address qubits
+            for i in range(nq_addr):   self.circuit.h(i)
+            if barrier:   self.circuit.barrier()
       
         if useCZ:  # will use CZ entangling gates
             for jd in range(nq_addr,num_q):   self.circuit.h( jd)
@@ -175,7 +175,7 @@ class ParametricQCrankV2():
             )
 
 #...!...!....................
-    def instantiate_circuits(self):
+    def instantiate_circuits(self,mult=1.):
         '''Generates the instantiated circuits by assigning the bound parameters.'''
         if self.angles_qcrank is None:
             raise RuntimeError('Parametrized QCRANKV2 circuit has not been bound to data. '
@@ -184,7 +184,7 @@ class ParametricQCrankV2():
         for j in range(self.angles_qcrank.shape[2]):
             my_dict = {}
             for i in range(self.nq_data):
-                my_dict[self.parV[i]] = self.angles_qcrank[:, i, j]
+                my_dict[self.parV[i]] = mult*self.angles_qcrank[:, i, j]
             circ = self.circuit.assign_parameters(my_dict)
             circs.append(circ)
         return circs
