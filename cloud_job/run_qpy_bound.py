@@ -3,14 +3,26 @@ __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
 
 """
-Load list of  quantum circuits from QPY files,run on fake backend, compare output w/ truth
+Load and execute quantum circuits from QPY files on fake backends
 
-Has build in QCrank decoder for simple case with 1 data qubit
-Uses results from last circuit for auto-scaling
+Loads pre-bound QCrank circuits from QPY format, runs them on selected backend
+(AerSimulator, FakeTorino, or FakeCusco), and compares reconstructed data with 
+ground truth. Includes built-in QCrank decoder for 1 data qubit case.
 
-# Combine all arguments
-./run_qpy_bound.py --input out/qcrank_nqa2_nqd2_bound.qpy --nshot 75000 --backendType 2
+Features:
+- Auto-scaling calibration using last circuit (1M1 pattern)
+- Correlation plots showing ground truth vs reconstructed data
+- Residual distribution histograms with mean and RMSE
+- Saves visualization as PNG with backend-specific filename
 
+Usage:
+  ./run_qpy_bound.py --input out/qcrank_nqa4_nqd1_bound.qpy --nshot 50000 --backendType 0
+  ./run_qpy_bound.py -i out/qcrank_nqa2_nqd2_bound.qpy -n 75000 -b 2
+
+Backend types:
+  0 = AerSimulator (ideal, perfect)
+  1 = FakeTorino (medium noise)
+  2 = FakeCusco (high noise)
 """
 
 import numpy as np
@@ -36,8 +48,8 @@ def plot_results(tdata, rdata, outF,backendName,txt):
     # Left plot: correlation between rdata and tdata
     ax=axes[0]
     ax.scatter(tdata_flat, rdata_flat, alpha=0.5,s=10)
-    ax.set_xlabel('tdata')
-    ax.set_ylabel('rdata')
+    ax.set_xlabel('ground truth')
+    ax.set_ylabel('reco data')
     ax.set_title('Correlation,  '+backendName)
     # Add 45-degree dashed line
     lims = [min(tdata_flat.min(), rdata_flat.min()), 

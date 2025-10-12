@@ -2,20 +2,25 @@
 __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
 
-
 '''
-runs localy  or on cloud (needd creds)
+Submit multi-XY Jacobian measurement circuits to quantum backends
 
-Records meta-data containing  job_id 
-HD5 arrays contain input and output
-Use sampler and manual transpiler
-Dependence:  qiskit 1.2
+Generates and submits parametric XY rotation circuits for quantum gradient
+(Jacobian) measurements. Useful for testing gradient-based optimization and
+variational quantum algorithms.
 
+Records metadata containing job_id. HDF5 arrays contain input parameters and
+measurement outputs. Uses Qiskit Sampler with manual transpiler.
 
-Use case:
-./submit_ibmq_job.py -E  --numQubits 3 3 --numSample 15 --numShot 8000  --backend   ibm_brussels  
+Dependencies: qiskit 1.2+
 
+Usage:
+  ./submit_multXY_job.py -E --numQubits 3 2 --numSample 15 --numShot 8000 --backend ibm_brussels
+  ./submit_multXY_job.py --numQubits 2 2 --numSample 10 --backend fake_cusco
 
+Backend options:
+  - Local: aer_ideal, fake_<hw_name>
+  - Cloud: ibm_<hw_name>
 '''
 import sys,os,hashlib
 import numpy as np

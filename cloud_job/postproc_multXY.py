@@ -3,8 +3,20 @@ __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
 
 '''
-Analyze  multXY  experiment
+Post-process and analyze multi-XY Jacobian measurement experiments
 
+Analyzes quantum gradient measurements from XY rotation circuits. Computes
+error metrics, correlation, and ellipse parameters. Generates visualization 
+plots comparing true outputs with reconstructed measurements.
+
+Optional auto-calibration using ellipse fitting (currently disabled by default).
+
+Usage:
+  ./postproc_multXY.py --basePath out --expName brussels_xy123 -p a -Y
+  ./postproc_multXY.py --expName sirius_xy456 -p ab
+
+Input:  *.meas.h5 (from retrieve_*_job.py)
+Output: *.h5 (processed) + plots (PNG)
 '''
 
 import os

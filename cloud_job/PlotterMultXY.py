@@ -1,5 +1,15 @@
+#!/usr/bin/env python3
 __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
+
+'''
+Plotting class for multi-XY Jacobian measurement experiments
+
+Visualizes Jacobian components and error distributions for quantum gradient
+measurements using XY rotation circuits.
+
+Used by: postproc_multXY.py
+'''
 
 from toolbox.PlotterBackbone import PlotterBackbone
 from matplotlib import cm as cmap

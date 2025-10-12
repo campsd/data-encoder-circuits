@@ -3,10 +3,22 @@ __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
 
 '''
-merge yields from many jobs as one hd5
+Merge measurement results from multiple jobs into a single HDF5 file
 
- ./merge_shots.py --dataPath $basePath/meas --expName qcr3a+12d_h1-1e_1  --numJobs 3
+Combines shot counts from multiple job executions to improve statistical
+accuracy. Useful when running the same circuit multiple times to accumulate
+more shots or when job limits restrict single-run shot counts.
 
+Validates that all jobs have consistent payload metadata (circuit config,
+backend, etc.) before merging. Updates total shot count and preserves
+metadata from all merged jobs.
+
+Usage:
+  ./merge_shots.py --dataPath out/meas --expName job_abc_* --numJobs 3
+  ./merge_shots.py --dataPath out/meas --expName qcr3a+12d_h1-1e_* --numJobs 5
+
+Input:  Multiple *.meas.h5 files with pattern matching
+Output: Single merged *.meas.h5 with combined shot counts and appended job info
 '''
 
 import os,sys

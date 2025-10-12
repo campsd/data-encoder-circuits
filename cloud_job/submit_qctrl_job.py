@@ -87,7 +87,7 @@ if __name__ == "__main__":
         
     print('M:  %d circuits with %d qubits are ready for Fire Opal'%(nCirc,nqTot))
     if args.verb>1: print('circ ops count:',qcEL[0].count_ops())
-      
+       
     if not args.executeCircuit:
         pprint(expMD)
         print('\nNO execution of circuit, use -E to execute the job\n')

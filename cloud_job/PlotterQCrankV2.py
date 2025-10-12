@@ -1,5 +1,16 @@
+#!/usr/bin/env python3
 __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
+
+'''
+Plotting class for QCrank experiment visualization
+
+Generates correlation plots and residual histograms comparing ground truth 
+data with quantum circuit reconstructions. Includes metadata summary display
+with circuit info, backend details, and error metrics.
+
+Used by: postproc_qcrank.py
+'''
 
 from toolbox.PlotterBackbone import PlotterBackbone
 from matplotlib import cm as cmap
