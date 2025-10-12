@@ -66,7 +66,10 @@ def summary_column(md):
     txt+='\n'+md['job_qa']['timestamp_running']
     txt+='\nshots/addr : %d'%(smd['num_shots']/pmd['num_addr'])
     txt+='\nshots/img : %d k'%(smd['num_shots']/1000)
-    txt+='\nnum sample %d'%(pmd['num_sample'])
+    if pmd['cal_1M1']:
+        txt+='\nnum sample %d+1'%(pmd['num_sample']-1)
+    else:
+        txt+='\nnum sample %d'%(pmd['num_sample'])
     txt+='\nsample size: %d'%(pmd['seq_len'])
     txt+='\nnum addr: %d'%pmd['num_addr']
     txt+='\nqubits: %d'%len(tmd['phys_qubits'])

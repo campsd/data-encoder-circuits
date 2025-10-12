@@ -25,13 +25,16 @@ from datetime import datetime, timezone
 
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler 
 from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
+from datetime import datetime
 
-from toolbox.Util_IOfunc import dateT2Str, iso_to_localtime
+
+from toolbox.Util_IOfunc import dateT2Str, iso_to_localtime, iso_to_pt_time
 from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
 from toolbox.Util_QiskitV2 import  circ_depth_aziz, harvest_circ_transpMeta
 from qiskit_aer import AerSimulator
 from qiskit import transpile
-
+from qiskit import qpy
+        
 sys.path.append(os.path.abspath("/qcrank_light"))
 from datacircuits.ParametricQCrankV2 import  ParametricQCrankV2 as QCrankV2, qcrank_reco_from_yields
 
@@ -50,6 +53,7 @@ def commandline_parser(backName="aer_ideal",provName="local_sim"):
     parser.add_argument('--rndSeed', default=None, type=int, help='(optional) freezes randominput sequence')
     parser.add_argument("--useCZ", action='store_true', default=False, help="change from CX to CZ entangelemnt")
     parser.add_argument("--mockCirc", action='store_true', default=False, help="changes Ry to make circ look nice but non-executable")
+    parser.add_argument("-A","--add1M1data", action='store_true', default=False, help="append circ w/ +1,-1, pattern along num_addr")
 
 
     # .... job running
@@ -62,7 +66,8 @@ def commandline_parser(backName="aer_ideal",provName="local_sim"):
 
     parser.add_argument( "-B","--noBarrier", action='store_true', default=False, help="remove all bariers from the circuit ")
     parser.add_argument( "-E","--executeCircuit", action='store_true', default=False, help="may take long time, test before use ")
-    parser.add_argument( "-e","--exportQPY", action='store_true', default=False, help="exprort parametrized circuit as QPY and metaData")
+    parser.add_argument( "-e1","--exportQPY1", action='store_true', default=False, help="exprort parametrized circuit as QPY")
+    parser.add_argument( "-e2","--exportQPY2", action='store_true', default=False, help="exprort binded circuit w/ meta as QPY and metaData")
  
     '''there are 3 types of backend
     - run by local Aer:  ideal  or  fake_kyoto
@@ -72,7 +77,7 @@ def commandline_parser(backName="aer_ideal",provName="local_sim"):
     args = parser.parse_args()
     
     args.provider=provName
-    if 'ibm' in args.backend:
+    if 'ibm' in args.backend  and 'local' in args.provider :
         args.provider='IBMQ_cloud'
  
     for arg in vars(args):
@@ -82,15 +87,41 @@ def commandline_parser(backName="aer_ideal",provName="local_sim"):
     return args
 
 #...!...!....................
+def M_export_qpy_parm(qc):
+    circF='out/qcrank_nqa%d_nqd%d_param.qpy'%(nq_addr,nq_data)
+    with open(circF, 'wb') as fd:
+        qpy.dump(qc, fd)
+    print('\nSaved 1 circ:',circF)
+
+#...!...!....................
+def M_export_qpy_bound():
+    inpData=expD['inp_udata']
+    qcrankObj.bind_data(inpData)
+    qcEL = qcrankObj.instantiate_circuits()
+    circF='out/qcrank_nqa%d_nqd%d_bound.qpy'%(nq_addr,nq_data)
+    nCirc=len(qcEL)
+    for ic in range(nCirc):
+        data=inpData[...,ic].flatten()
+        qcEL[ic].metadata = {  "name":"image_%d"%ic, "inp_data": data.tolist(),
+                               "nq_addr":nq_addr,"nq_data":nq_data}
+        
+    with open(circF, 'wb') as fd:
+        qpy.dump(qcEL, fd)
+    print('\nSaved %d circs:'%(nCirc),circF)
+    nshot=(1<<nq_addr)*3000
+    print('exec:  ./run_qpy_bound.py --input %s --nshot %d --backendType 2'%(circF, nshot))
+    exit(99)
+
+#...!...!....................
 def buildPayloadMeta(args):
     pd={}  # payload
     pd['nq_addr'],pd['nq_data']=args.numQubits
     pd['num_addr']=1<<pd['nq_addr']
-    pd['num_sample']=args.numSample
+    pd['num_sample']=args.numSample+args.add1M1data
     pd['num_qubit']=pd['nq_addr']+pd['nq_data']
     pd['seq_len']=pd['nq_data']*pd['num_addr']
     pd['rnd_seed']=args.rndSeed
-    
+    pd['cal_1M1']=args.add1M1data
     sbm={}
     sbm['num_shots']=args.numShot
     pom={}
@@ -111,22 +142,24 @@ def buildPayloadMeta(args):
 
 
 #...!...!....................
-def harvest_submitMeta(job,md,args):
+def harvest_submitMeta(job_id,md,args):
     sd=md['submit']
-    sd['job_id']=job.job_id()
+    sd['job_id']=job_id
     backN=args.backend
-    sd['backend']=backN     #  job.backend().name  V2
+    sd['backend']=backN     
     
     t1=localtime()
     sd['date']=dateT2Str(t1)
     sd['unix_time']=int(time())
     sd['provider']=args.provider
-    #print('bbb',args.backend,args.expName)
+        
     if args.expName==None:
         # the  6 chars in job id , as handy job identiffier
         md['hash']=sd['job_id'].replace('-','')[3:9] # those are still visible on the IBMQ-web
-        if args.provider=='IBMQ_cloud':
+        if args.provider=='IBMQ_cloud' :
             tag=args.backend.split('_')[1]
+        if args.provider=='QCTRL_fireopal' :
+            tag=args.backend.split('_')[1]+'FO'
         if args.provider=="IQM_cloud":
             tag=args.backend.split('_')[0]
         if args.provider=="local_sim":
@@ -143,15 +176,28 @@ def construct_random_inputs(md,verb=1, seed=None):
     num_addr=pmd['num_addr']
     nq_data=pmd['nq_data']
     n_img=pmd['num_sample']
-
+    
     # generate float random data
     np.random.seed(pmd['rnd_seed'])  # Set a fixed seed for reproducibility, None gives alwasy random 
     data_inp = np.random.uniform(-1, 1., size=(num_addr, nq_data, n_img))
     #print('data_inp sample:\n',data_inp[:3,:3,:2]); kk
+
+    if pmd['cal_1M1']: # Fill the last image with alternating patterns
+        magn = np.random.uniform(0.85, 0.95, size=(num_addr, nq_data))
+        signs = np.random.choice([-1, 1], size=(num_addr, nq_data))
+        # Combine signs and magnitudes
+        data_inp[...,-1] = magn * signs
+        
+        '''
+        for q in range(nq_data):
+            start_val = 0.9
+            if q % 2 == 1:  start_val *=-1
+            pattern = np.array([start_val if i % 2 == 0 else -start_val for i in range(num_addr)])
+            data_inp[:, q, -1] = pattern  # assign pattern along num_addr
+        '''
     if verb>2:
-        print('input data=',data_inp.shape,repr(data_inp))
+        print('input data.T=',data_inp.shape,repr(data_inp.T))
     bigD={'inp_udata': data_inp}
- 
     return bigD
 
 
@@ -167,28 +213,22 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
         elaT=time()-T0
         print(' job done, elaT=%.1f min'%(elaT/60.))
         qa['running_duration']=elaT
-        qa['timestamp_running']=dateT2Str(localtime() )
-
+        qa['timestamp_running'] = str(elaT)
     else:
         jobMetr=job.metrics()
         #print('HSR:jobMetr:',jobMetr)
         #print('tt',jobMetr['timestamps']['running'])
-        t1=iso_to_localtime((jobMetr['timestamps']['running']))
+        # Convert IBM UTC timestamp to PT
+        t1=iso_to_pt_time((jobMetr['timestamps']['running']))
         qa['timestamp_running']=dateT2Str(t1)
         qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
-        qa['all_circ_executions']=jobMetr['executions']
-        
-        if jobMetr['num_circuits']>0:
-            qa['one_circ_depth']=jobMetr['circuit_depths'][0]
-        else:
-            qa['one_circ_depth']=None
-                
+                 
     #1pprint(jobRes[0])
     nCirc=len(jobRes)  # number of circuit in the job
     jstat=str(job.status())
     
     countsL=[ jobRes[i].data.c.get_counts() for i in range(nCirc) ]
-
+    #print('countsL:',countsL)
     # collect job performance info
     res0cl=jobRes[0].data.c
     qa['status']=jstat
@@ -200,7 +240,7 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
     print('job QA'); pprint(qa)
     md['job_qa']=qa
     bigD['rec_udata'], bigD['rec_udata_err'] =  qcrank_reco_from_yields(countsL,pmd['nq_addr'],pmd['nq_data'])
-
+    #print('rec2 data.T',bigD['rec_udata'].T)
     return bigD
 
 
@@ -212,14 +252,16 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
 if __name__ == "__main__":
 
     args=commandline_parser()
+    
     np.set_printoptions(precision=3)
     expMD=buildPayloadMeta(args)
    
     pprint(expMD)
-    expD=construct_random_inputs(expMD)
-         
+    expD=construct_random_inputs(expMD,args.verb)
+    
     # generate parametric circuit
     nq_addr, nq_data = args.numQubits
+    
     qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ,measure=True,barrier=not args.noBarrier, mockCirc=args.mockCirc )
         
     qcP=qcrankObj.circuit
@@ -229,13 +271,9 @@ if __name__ == "__main__":
     print('M: ideal gates count:', qcP.count_ops())
     if args.verb>2 or nq_addr<4:  print(qcrankObj.circuit.draw())
       
-    if args.exportQPY:
-        from qiskit import qpy
-        circF='out/qcrank_nqa%d_nqd%d.qpy'%(nq_addr,nq_data)
-        with open(circF, 'wb') as fd:
-            qpy.dump(qcP, fd)
-        print('\nSaved circ1:',circF)
-        exit(0)
+    if args.exportQPY1:  M_export_qpy_parm(qcP) ; exit(0)
+    if args.exportQPY2: M_export_qpy_bound();  exit(0)  # circuit is now corrupted
+               
     
     # ------  construct sampler(.) job ------
     runLocal=True  # ideal or fake backend
@@ -322,7 +360,7 @@ if __name__ == "__main__":
     T0=time()
     job = sampler.run(tuple(qcEL))
    
-    harvest_submitMeta(job,expMD,args)    
+    harvest_submitMeta(job.job_id(),expMD,args)    
     if args.verb>1: pprint(expMD)
     
     if runLocal:

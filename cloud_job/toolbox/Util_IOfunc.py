@@ -5,6 +5,7 @@ import numpy as np
 import time, os
 import yaml
 from datetime import datetime
+import pytz
 
 from pprint import pprint
 import csv
@@ -105,6 +106,39 @@ def dateStr2T(xS):  #  --> datetime
 
 #...!...!..................
 def iso_to_localtime(iso_string):
+    """Convert ISO UTC timestamp to local time struct
+    
+    DEPRECATED: This function doesn't handle timezones correctly.
+    Use iso_to_pt_time() for Pacific Time conversion instead.
+    """
     dt = datetime.strptime(iso_string[:-1], "%Y-%m-%dT%H:%M:%S.%f")  # Remove 'Z' and parse
     return time.localtime(time.mktime(dt.timetuple()))
+
+#...!...!..................
+def iso_to_pt_time(iso_string):
+    """Convert ISO UTC timestamp to Pacific Time struct
+    
+    Args:
+        iso_string: ISO 8601 timestamp string (e.g., '2024-01-15T12:34:56.789Z')
+    
+    Returns:
+        time.struct_time in Pacific Time
+    """
+    # Parse ISO timestamp (with or without 'Z')
+    if iso_string.endswith('Z'):
+        iso_string = iso_string[:-1]  # Remove 'Z'
+    
+    # Parse as UTC datetime
+    dt_utc = datetime.strptime(iso_string, "%Y-%m-%dT%H:%M:%S.%f")
+    
+    # Localize as UTC
+    utc_timezone = pytz.UTC
+    dt_utc = utc_timezone.localize(dt_utc)
+    
+    # Convert to Pacific Time
+    pacific = pytz.timezone('America/Los_Angeles')
+    dt_pt = dt_utc.astimezone(pacific)
+    
+    # Convert to time.struct_time
+    return dt_pt.timetuple()
 

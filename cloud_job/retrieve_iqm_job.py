@@ -63,8 +63,6 @@ def harvest_iqm_results(job,md,bigD,T0=None):  # many circuits
         time_diff = dt2 - dt1
         return time_diff.total_seconds()
 
- 
-
     #pprint(jobRes.to_dict())
     tstampD=jobRes.timestamps
     #pprint(tstampD)
@@ -75,14 +73,6 @@ def harvest_iqm_results(job,md,bigD,T0=None):  # many circuits
     qa['quantum_seconds']= time_diff_sec(t0,t2)
     qa['timestamp_running']=dateT2Str(iso_to_localtime(t2))
     
-    
-    '''
-           if jobMetr['num_circuits']>0:
-                qa['one_circ_depth']=jobMetr['circuit_depths'][0]
-            else:
-       
-    '''
-
     nCirc=len(cntDL)
     jstat=str(job.status())
     
@@ -100,7 +90,7 @@ def harvest_iqm_results(job,md,bigD,T0=None):  # many circuits
     md['job_qa']=qa
     bigD['rec_udata'], bigD['rec_udata_err'] =  qcrank_reco_from_yields(countsL,pmd['nq_addr'],pmd['nq_data'])
 
-    return bigD
+    
 
         
 #=================================

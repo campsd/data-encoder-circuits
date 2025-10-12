@@ -12,7 +12,7 @@ from toolbox.Util_H5io4 import  write4_data_hdf5, read4_data_hdf5
 from time import time
 from pprint import pprint
 import numpy as np
-from PlotterQCrankV3 import Plotter
+from PlotterQCrankV2 import Plotter
 
 from toolbox.Util_QiskitV2 import unpack_numpy_to_counts
 
@@ -24,6 +24,7 @@ def get_parser():
     
     parser.add_argument( "-Y","--noXterm", dest='noXterm',  action='store_false', default=True, help="enables X-term for interactive mode")         
     parser.add_argument("--basePath",default='out',help="head dir for set of experimentst")
+    parser.add_argument("-N","--noAutoCalib", action='store_true', default=False, help="disable automatic self-calibration")
                         
     parser.add_argument('-e',"--expName",  default='exp_62a21daf',help='IBMQ experiment name assigned during submission')
     
@@ -43,22 +44,42 @@ def get_parser():
 
 
 #...!...!....................
-def postproc_qcrank(bigD,md):
+def postproc_qcrank(bigD,md,doAutoCalib=True):
     pom=md['postproc']
-    #if pom['hw_calib']: expD['rec_udata']*=pom['ampl_fact']  # changes DATA
+    pmd=md['payload']
+    if pmd['cal_1M1']:  # use last circuit for auto-calib
+        rcdata=expD['rec_udata'][...,-1].flatten()
+        tcdata=expD['inp_udata'][...,-1].flatten()
+        facV=rcdata/tcdata
+        ampFac=1/np.mean(facV)
+        # clip last circuit from payload
+        expD['rec_udata']=expD['rec_udata'][...,:-1]
+        expD['inp_udata']=expD['inp_udata'][...,:-1]
+        #print('rdata:',rdata)
+        #print('tdata:',tdata)
+        #print('facV',facV,1/fac)
+        print('cal_1M1',ampFac)
+               
     rdata=expD['rec_udata'].flatten()
     tdata=expD['inp_udata'].flatten()
 
-    #1print('tdata sample:',tdata[:10]);aa
-    elm=compute_ellipse(tdata,rdata)
-
-    if 1:  # hack to do self-calibration
-        expD['rec_udata']*=elm['ampl_fact']  # changes DATA
+    #Xelm=compute_ellipse(tdata,rdata)
+    
+    if doAutoCalib:  # do self-calibration
+        if md['payload']['cal_1M1']:            
+            pom['hw_calib']='1M1'
+            pom['ampl_fact']=ampFac
+        else:
+            pom['hw_calib']='auto??'
+            pom['ampl_fact']=1. # tmp
+        
+        expD['rec_udata']*=pom['ampl_fact']  # changes DATA
         rdata=expD['rec_udata'].flatten()
         tdata=expD['inp_udata'].flatten()
-        pom['hw_calib']='auto'
-        pom['ampl_fact']=elm['ampl_fact']
-                
+    else:   
+        pom['hw_calib']='off'
+        pom['ampl_fact']=1.
+        
     res_data = rdata - tdata
     mean = np.mean(res_data)
     std = np.std(res_data)
@@ -70,10 +91,10 @@ def postproc_qcrank(bigD,md):
     pom['res_mean']=float(mean)
     pom['res_std']=float(std)
     pom['res_SE_s']=float(se_s)
-    pom['ellipse']=elm
+    #pom['ellipse']=elm
     
 #...!...!....................
-def compute_ellipse(X: np.ndarray, Y: np.ndarray):
+def XXcompute_ellipse(X: np.ndarray, Y: np.ndarray):
     # Stack X and Y into a 2D array
     data = np.vstack((X, Y)).T
     
@@ -117,23 +138,20 @@ if __name__=="__main__":
     expD,expMD=read4_data_hdf5(os.path.join(args.dataPath,inpF))
 
     if 0: # fix old code
-        import json
-        rjmJ=expMD['submit']['job_ref_json']
-        
-        # The given JSON-like string (using triple quotes for readability)
-        
-        # Parse the JSON string
-        parsed_data = json.loads(rjmJ)
-        expMD['job_qa']['timestamp_running']=execTimeConverter(parsed_data)
-       
+        expMD['job_qa']['timestamp_running']=execTimeConverter(parsed_data)       
         
     if args.verb>=2:
         print('M:expMD:');  pprint(expMD)
         if args.verb>=3:
             print(expD)
         stop2
+    
+    # Apply auto-calibration unless disabled
+    doAutoCalib = not args.noAutoCalib
+    if args.verb>=1:
+        print('M: auto-calibration:', 'enabled' if doAutoCalib else 'disabled')
         
-    postproc_qcrank(expD,expMD)
+    postproc_qcrank(expD,expMD,doAutoCalib=doAutoCalib)
       
     #...... WRITE  OUTPUT
     outF=os.path.join(args.outPath,expMD['short_name']+'.h5')
@@ -146,7 +164,7 @@ if __name__=="__main__":
     expMD['plot']={'resid_max_range':0.3}
 
     plot=Plotter(args)
-    fig0=10 if expMD['postproc']['hw_calib'] else 1
+    fig0=1 if expMD['postproc']['hw_calib']=='off' else 10
    
     if 'a' in args.showPlots:
         plot.ehands_accuracy(expD,expMD,figId=fig0)

@@ -77,7 +77,7 @@ class ParametricQCrankV2():
             barrier: bool (True)
                 If True, inserts a barrier in the circuit.
         '''
-
+        
         # Sanity check: ensure at least one address-data qubit pair exists
         assert nq_addr * nq_data >= 1
 
@@ -105,7 +105,7 @@ class ParametricQCrankV2():
                 self.unitary(unitary, [qubit], label="Ry")
 
             # Monkey-patch the method to the QuantumCircuit class
-            QuantumCircuit.ry = mockRy
+            QuantumCircuit.ry = mockRy            
             
         if addressH:        # Apply Hadamard gates (diffusion) to all address qubits
             for i in range(nq_addr):   self.circuit.h(i)

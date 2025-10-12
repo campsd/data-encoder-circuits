@@ -7,6 +7,7 @@ source ~/.ssh/ibmq.creds jan
 IMG=balewski/ubu24-qiskit:p5  # works
 IMG=balewski/ubu24-qiskit:p6d
 IMG=balewski/ubu24-qiskit:p7c 
+IMG=balewski/ubu24-qiskit:p7m  # includes QSP & Q-CTRL
 
 
 echo launch image $IMG
@@ -33,6 +34,7 @@ eval podman run -it --network=host  \
      -e QISKIT_IBM_TOKEN=$QISKIT_IBM_TOKEN \
      -e QISKIT_IBM_CHANNEL=$QISKIT_IBM_CHANNEL \
      -e QISKIT_IBM_INSTANCE=$QISKIT_IBM_INSTANCE \
+     -e QCTRL_API_KEY=$QCTRL_API_KEY \
      --volume /shared_volumes/$WORK_DIR:$WORK_DIR \
      --volume $DATA_VAULT:/dataVault2025 \
      -e LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1 \
