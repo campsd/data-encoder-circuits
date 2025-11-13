@@ -3,10 +3,10 @@ __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
 
 '''
- Retrieve  results of IQM job
+ Retrieve  results of IonQ job
 
 Required INPUT:
-    --expName: exp_j33ab44
+    --expName: sim_a09172
 
 Output:  raw  yields + meta data
 '''
@@ -15,9 +15,10 @@ import time,os,sys
 from pprint import pprint
 import numpy as np
 from toolbox.Util_H5io4 import  read4_data_hdf5, write4_data_hdf5
-from iqm.qiskit_iqm import IQMProvider ,IQMJob
-from qiskit.providers.jobstatus import JobStatus
+from qiskit_ionq import IonQProvider
+#from submit_ibmq_job import harvest_sampler_results
 
+from qiskit.providers.jobstatus import JobStatus
 from toolbox.Util_IOfunc import dateT2Str, iso_to_localtime
 from datetime import datetime
 from time import time, sleep,localtime
@@ -46,8 +47,9 @@ def get_parser():
     return args
 
 #...!...!....................
-def harvest_iqm_results(job,md,bigD,T0=None):  # many circuits
-    assert isinstance(job, IQMJob)
+def harvest_ionq_results(job,md,bigD,T0=None):  # many circuits
+    print(type(job))
+    #assert isinstance(job, IonQJob)
    
     pmd=md['payload']
     qa={}
@@ -55,23 +57,7 @@ def harvest_iqm_results(job,md,bigD,T0=None):  # many circuits
 
     cntDL=jobRes.get_counts()
     #print(dir(jobRes))
-
-    
-    def time_diff_sec(x, y):
-        dt1 = datetime.fromisoformat(x)
-        dt2 = datetime.fromisoformat(y)
-        time_diff = dt2 - dt1
-        return time_diff.total_seconds()
-
-    #pprint(jobRes.to_dict())
-    tstampD=jobRes.timestamps
-    #pprint(tstampD)
-
-    t0=tstampD['compile_start']
-    t1=tstampD['execution_start']
-    t2=tstampD['execution_end']
-    qa['quantum_seconds']= time_diff_sec(t0,t2)
-    qa['timestamp_running']=dateT2Str(iso_to_localtime(t2))
+    qa['timestamp_running']='no qsec data'
     
     nCirc=len(cntDL)
     jstat=str(job.status())
@@ -84,7 +70,7 @@ def harvest_iqm_results(job,md,bigD,T0=None):  # many circuits
     qa['status']=jstat
     qa['num_circ']=nCirc
     qa['shots']=res0.shots
-    qa['calib_id']=  res0._metadata['calibration_set_id']
+    #qa['calib_id']=  res0._metadata['calibration_set_id']
         
     print('job QA'); pprint(qa)
     md['job_qa']=qa
@@ -113,30 +99,29 @@ if __name__ == "__main__":
         print('qasm circ:',type(rec2),rec2)
     
     jid=expMD['submit']['job_id']
-    #1jid='cns2cfhqygeg00879yv0' # smapler,  cairo
-
+    backType=expMD['submit']['backend_type']
+    
     # ------  construct sampler-job w/o backend ------
-    qpuName=expMD['submit']['backend']
-    print('M: access IQM backend ...',qpuName)
-    provider=IQMProvider(url="https://cocos.resonance.meetiqm.com/"+qpuName)
-    backend = provider.get_backend()
-    print('got BCKN:',backend.name,qpuName)
-   
-    print('M: retrieve jid:',jid)
+    
+    print('M: retrieve jid:',jid,backType)
+    provider = IonQProvider()
+    #if backType==
+    backend = provider.get_backend(backType)
+    
     job=backend.retrieve_job(jid)
     T0=time()
     i=0
     while True:
         jstat=job.status()
         elaT=time()-T0
-        print('M:i=%d  status=%s, elaT=%.1f sec'%(i,jstat,elaT))        
+        print('M:i=%d  status=%s, elaT=%.1f sec'%(i,jstat,elaT))
         if jstat==JobStatus.DONE: break
         if jstat==JobStatus.ERROR: exit(99)
-        if jstat==JobStatus.CANCELLED: exit(99)
         i+=1; sleep(20)
     print('M: got results')#, type(job))
-        
-    harvest_iqm_results(job,expMD,expD)
+
+    harvest_ionq_results(job,expMD,expD)
+
    
     if args.verb>2: pprint(expMD)
     

@@ -128,7 +128,7 @@ class Plotter(PlotterBackbone):
             nrow,ncol=3,1 ; xyIn=(5,10)
         fig=self.plt.figure(figId,facecolor='white', figsize=xyIn)
         
-        topTit=[ 'job: '+md['short_name'], 'Residual ',smd['backend']]
+        topTit=[ 'job: '+md['short_name'], 'Residuals',smd['backend']]
 
         
         #....... plot data .....

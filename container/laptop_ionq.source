@@ -1,0 +1,49 @@
+#!/bin/bash
+
+#echo load my IonQ creds  vial OLCF/Bert or Talita
+source /Users/balewski/.ssh/ionq.credentials
+
+echo load my NERSC-AWS creds
+#1source /Users/balewski/.ssh/nersc_aws.credentials
+#env |grep NERSC_AWS  # activate to see the creds
+
+IMG=balewski/ubu24-qiskit:p7n
+
+echo launch image $IMG
+echo you are launching Podman image ...  remeber to exit
+
+JNB_PORT=' '
+WORK_DIR=/qcrank_light
+DATA_VAULT=/shared_volumes/dataVault2025
+
+
+echo "The number of arguments is: $#"
+#  encoded variables:    jnb
+for var in "$@"; do
+  echo "The length of argument '$var' is: ${#var}"
+  if [[ "jnb" ==  $var ]];  then
+      #JNB_PORT="    --publish 8833:8833 "
+      JNB_PORT="    -p 8833:8833 "
+     echo added  $JNB_PORT
+     echo "  cd notebooks;  jupyter notebook --ip 0.0.0.0 --no-browser --allow-root --port  8833 "
+  fi
+  # ... more ...
+done
+    
+eval podman run -it --rm \
+    -e IONQ_API_KEY=$IONQ_API_KEY \
+    --volume /shared_volumes/quantumMind/IonQ:/IonQ \
+    --volume /shared_volumes/quantumMind:/quantumMind \
+    --volume /shared_volumes/qcrank_light:/qcrank_light \
+    --volume $DATA_VAULT:/dataVault2025 \
+    --workdir $WORK_DIR \
+    --user $(id -u):$(id -g) \
+    $JNB_PORT \
+    $IMG /bin/bash
+
+# to acces susing my NERSC+credit card account
+#   -e AWS_ACCESS_KEY_ID=$NERSC_AWS_ACCESS_KEY_ID \
+#    -e AWS_SECRET_ACCESS_KEY="$NERSC_AWS_SECRET_ACCESS_KEY" \
+#    -e AWS_DEFAULT_REGION=$NERSC_AWS_REGION \
+  
+

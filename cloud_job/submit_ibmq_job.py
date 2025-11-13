@@ -162,6 +162,8 @@ def harvest_submitMeta(job_id,md,args):
             tag=args.backend.split('_')[1]+'FO'
         if args.provider=="IQM_cloud":
             tag=args.backend.split('_')[0]
+        if args.provider=="IonQ_cloud":
+            tag=args.backend.split('_')[0]
         if args.provider=="local_sim":
             tag=args.backend.split('_')[1]
         md['short_name']='%s_%s'%(tag,md['hash'])
@@ -188,13 +190,6 @@ def construct_random_inputs(md,verb=1, seed=None):
         # Combine signs and magnitudes
         data_inp[...,-1] = magn * signs
         
-        '''
-        for q in range(nq_data):
-            start_val = 0.9
-            if q % 2 == 1:  start_val *=-1
-            pattern = np.array([start_val if i % 2 == 0 else -start_val for i in range(num_addr)])
-            data_inp[:, q, -1] = pattern  # assign pattern along num_addr
-        '''
     if verb>2:
         print('input data.T=',data_inp.shape,repr(data_inp.T))
     bigD={'inp_udata': data_inp}
@@ -206,23 +201,25 @@ def harvest_sampler_results(job,md,bigD,T0=None):  # many circuits
     pmd=md['payload']
     qa={}
     jobRes=job.result()
-   
-    jobMetr=job.metrics()    
     
-    if T0!=None:  # when run locally
+    
+    if T0!=None :  # when run locally
         elaT=time()-T0
         print(' job done, elaT=%.1f min'%(elaT/60.))
         qa['running_duration']=elaT
-        qa['timestamp_running'] = str(elaT)
+        qa['timestamp_running'] = '%.1g'%(elaT)
     else:
-        jobMetr=job.metrics()
-        #print('HSR:jobMetr:',jobMetr)
-        #print('tt',jobMetr['timestamps']['running'])
-        # Convert IBM UTC timestamp to PT
-        t1=iso_to_pt_time((jobMetr['timestamps']['running']))
-        qa['timestamp_running']=dateT2Str(t1)
-        qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
-                 
+        try:
+            jobMetr=job.metrics()
+            #print('HSR:jobMetr:',jobMetr)
+            #print('tt',jobMetr['timestamps']['running'])
+            # Convert IBM UTC timestamp to PT
+            t1=iso_to_pt_time((jobMetr['timestamps']['running']))
+            qa['timestamp_running']=dateT2Str(t1)
+            qa['quantum_seconds']=jobMetr['usage']['quantum_seconds']
+        except:
+            aa=1
+            
     #1pprint(jobRes[0])
     nCirc=len(jobRes)  # number of circuit in the job
     jstat=str(job.status())
