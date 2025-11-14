@@ -62,7 +62,7 @@ if __name__ == "__main__":
          
     # generate parametric circuit
     nq_addr, nq_data = args.numQubits
-    qcrankObj = QCrankV2( nq_addr, nq_data,measure=True,barrier=not args.noBarrier )
+    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ, 002m16666666666666666easure=True,barrier=not args.noBarrier )
 
     qcP=qcrankObj.circuit
     cxDepth=qcP.depth(filter_function=lambda x: x.operation.name == 'cx')
@@ -102,7 +102,6 @@ if __name__ == "__main__":
         
     print('got BCKN:',backend.name,'debias:',args.useRC)
     
-
     #  IonQ (QIS) recommends 0-1 to avoid aggressive re-synthesis; 
     qcT=transpile(qcP, backend=backend, optimization_level=1)
     
@@ -158,6 +157,6 @@ if __name__ == "__main__":
     outF=os.path.join(outPath,expMD['short_name']+'.iqm.h5')
     write4_data_hdf5(expD,outF,expMD)
     print('M:end --expName   %s   %s  %s    --basePath  $basePath  '%(expMD['short_name'],expMD['hash'], args.backend))
-    print('   ./retrieve_ionq_job.py  --expName   %s   \n'%(expMD['short_name'] ))
+    print('   ./retrieve_ionq_job.py   --basePath  $basePath  --expName   %s   \n'%(expMD['short_name'] ))
 
     #pprint(expMD)
