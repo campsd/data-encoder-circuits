@@ -105,9 +105,11 @@ if __name__ == "__main__":
     
     print('M: retrieve jid:',jid,backType)
     provider = IonQProvider()
-    #if backType==
-    backend = provider.get_backend(backType)
-    
+    if 'qpu' in backType:
+        backend = provider.get_backend(backType)
+    else:
+        backend= provider.get_backend("simulator")
+        
     job=backend.retrieve_job(jid)
     T0=time()
     i=0

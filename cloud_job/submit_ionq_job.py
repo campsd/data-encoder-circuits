@@ -62,7 +62,7 @@ if __name__ == "__main__":
          
     # generate parametric circuit
     nq_addr, nq_data = args.numQubits
-    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ, 002m16666666666666666easure=True,barrier=not args.noBarrier )
+    qcrankObj = QCrankV2( nq_addr, nq_data, useCZ=args.useCZ, measure=True,barrier=not args.noBarrier )
 
     qcP=qcrankObj.circuit
     cxDepth=qcP.depth(filter_function=lambda x: x.operation.name == 'cx')
