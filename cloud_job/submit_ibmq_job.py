@@ -163,14 +163,17 @@ def harvest_submitMeta(job_id,md,args):
         if args.provider=="IQM_cloud":
             tag=args.backend.split('_')[0]
         if args.provider=="IonQ_cloud":
-            tag=args.backend.split('_')[0]
+            tag=args.backend #.split('_')[0]
+            #if 'sim' in args.backend: tag='fake_'+tag
         if args.provider=="local_sim":
             tag=args.backend.split('_')[1]
+            if 'fake' in args.backend: tag='fake_'+tag
         md['short_name']='%s_%s'%(tag,md['hash'])
     else:
         myHN=hashlib.md5(os.urandom(32)).hexdigest()[:6]
         md['hash']=myHN
         md['short_name']=args.expName
+    #print(args.backend); pprint(md);  aaa
 
 #...!...!....................
 def construct_random_inputs(md,verb=1, seed=None):
@@ -266,7 +269,7 @@ if __name__ == "__main__":
     print('.... PARAMETRIZED IDEAL CIRCUIT .............., cx-depth=%d'%cxDepth)
     nqTot=qcP.num_qubits
     print('M: ideal gates count:', qcP.count_ops())
-    if args.verb>2 or nq_addr<4:  print(qcrankObj.circuit.draw())
+    if args.verb>2 or nq_addr+nq_data<7:  print(qcrankObj.circuit.draw())
       
     if args.exportQPY1:  M_export_qpy_parm(qcP) ; exit(0)
     if args.exportQPY2: M_export_qpy_bound();  exit(0)  # circuit is now corrupted
@@ -275,7 +278,8 @@ if __name__ == "__main__":
     # ------  construct sampler(.) job ------
     runLocal=True  # ideal or fake backend
     outPath=os.path.join(args.basePath,'meas') 
-    if 'ideal' in args.backend: 
+    if 'ideal' in args.backend:
+        assert not args.useRC
         qcT=qcP
         transBackN='ideal'
         backend = AerSimulator()
@@ -283,6 +287,7 @@ if __name__ == "__main__":
         print('M: activate QiskitRuntimeService() ...')
         service = QiskitRuntimeService()
         if  'fake' in args.backend:
+            assert not args.useRC
             transBackN=args.backend.replace('fake_','ibm_')
             hw_backend = service.backend(transBackN)
             backend = AerSimulator.from_backend(hw_backend) # overwrite ideal-backend
@@ -290,6 +295,7 @@ if __name__ == "__main__":
         else:
             outPath=os.path.join(args.basePath,'jobs')
             assert 'ibm' in args.backend
+            assert  args.useRC  # always improves results
             backend = service.backend(args.backend)  # overwrite ideal-backend
             print('use true HW backend =', backend.name)          
             runLocal=False
@@ -307,7 +313,7 @@ if __name__ == "__main__":
         cxDepth=qcT.depth(filter_function=lambda x: x.operation.name == 'cz')
         print('.... PARAMETRIZED Transpiled (%s) CIRCUIT .............., cx-depth=%d'%(backend.name,cxDepth))
         print('M: transpiled gates count:', qcT.count_ops())
-        if args.verb>2 or nq_addr<4:  print(qcT.draw('text', idle_wires=False))
+        if args.verb>2 or nq_addr+nq_data<7:  print(qcT.draw('text', idle_wires=False))
                 
         
     circ_depth_aziz(qcP,'ideal')

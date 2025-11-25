@@ -95,10 +95,16 @@ if __name__ == "__main__":
         backend= provider.get_backend("simulator")
         backend.set_options(noise_model=qpuN2)
     elif qpuN1=='qpu':
+        assert args.useRC # always improves results
+        expMD['submit']['debias']=True
         backend = provider.get_backend("qpu."+qpuN2)
-        expMD['submit']['debias']=args.useRC
     else:
         assert 1==2 # invalid qpu
+
+    if args.useRC:    
+        errMit=ErrorMitigation.DEBIASING
+    else:
+        errMit=ErrorMitigation.NO_DEBIASING
         
     print('got BCKN:',backend.name,'debias:',args.useRC)
     
@@ -137,9 +143,6 @@ if __name__ == "__main__":
     # ----- submission ---------- 
     numShots=expMD['submit']['num_shots']
     print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcEL[0].num_qubits,numShots,args.backend))
-
-    errMit=ErrorMitigation.NO_DEBIASING  
-    if  args.useRC:   errMit=ErrorMitigation.DEBIASING
 
     if 1:
         # note error mit is ignored fro simu ideal or noisy

@@ -25,6 +25,7 @@ def get_parser():
     parser.add_argument( "-Y","--noXterm", dest='noXterm',  action='store_false', default=True, help="enables X-term for interactive mode")         
     parser.add_argument("--basePath",default='out',help="head dir for set of experimentst")
     parser.add_argument("-N","--noAutoCalib", action='store_true', default=False, help="disable automatic self-calibration")
+    parser.add_argument("--onlyCalibSamp", action='store_true', default=False, help="show only calibration data")
                         
     parser.add_argument('-e',"--expName",  default='exp_62a21daf',help='IBMQ experiment name assigned during submission')
     
@@ -52,19 +53,18 @@ def postproc_qcrank(bigD,md,doAutoCalib=True):
         tcdata=expD['inp_udata'][...,-1].flatten()
         facV=rcdata/tcdata
         ampFac=1/np.mean(facV)
-        # clip last circuit from payload
-        expD['rec_udata']=expD['rec_udata'][...,:-1]
-        expD['inp_udata']=expD['inp_udata'][...,:-1]
-        #print('rdata:',rdata)
-        #print('tdata:',tdata)
-        #print('facV',facV,1/fac)
         print('cal_1M1',ampFac)
+        if not args.onlyCalibSamp: # clip last circuit from payload
+            expD['rec_udata']=expD['rec_udata'][...,:-1]
+            expD['inp_udata']=expD['inp_udata'][...,:-1]
+        else:
+            expD['rec_udata']=expD['rec_udata'][...,-1:]
+            expD['inp_udata']=expD['inp_udata'][...,-1:]
                
     rdata=expD['rec_udata'].flatten()
     tdata=expD['inp_udata'].flatten()
 
-    #Xelm=compute_ellipse(tdata,rdata)
-    
+    pom['only_calib_samp']=args.onlyCalibSamp
     if doAutoCalib:  # do self-calibration
         if md['payload']['cal_1M1']:            
             pom['hw_calib']='1M1'
@@ -93,37 +93,6 @@ def postproc_qcrank(bigD,md,doAutoCalib=True):
     pom['res_SE_s']=float(se_s)
     #pom['ellipse']=elm
     
-#...!...!....................
-def XXcompute_ellipse(X: np.ndarray, Y: np.ndarray):
-    # Stack X and Y into a 2D array
-    data = np.vstack((X, Y)).T
-    
-    # Compute covariance matrix and eigenvalues
-    cov_matrix = np.cov(data.T)
-    eig_vals,  eig_vecs  = np.linalg.eig(cov_matrix)
-    
-    # Compute width and height
-    width, height = 2 * np.sqrt(eig_vals[:2])
-    angle_rad=np.arctan2(*eig_vecs[:, 0][::-1])
-    if width <height :
-        width, height=height,width
-        angle_rad=angle_rad-np.pi/2
-        #eig_vecs=np.flip(eig_vecs,axis=1)
-        print('flipped')
-    
-    angle_deg=np.rad2deg(angle_rad)
-    correlation = np.corrcoef(X,Y)[0, 1]
-    amplFact=1/np.tan(angle_rad)
-    # Print width and height
-    print('Width: %.3f   Height: %.3f  ang=%.1f deg  correl=%.3f ampleFact=%.2f'%( width,height,angle_deg,correlation,amplFact))
-    outD={'num_pix':X.shape[0],'width':width,'height':height,'angle':angle_rad, 'correl':correlation,'ampl_fact':amplFact}
-    #pprint(outD)
-    
-    # from matplotlib.patches import Ellipse
-    #ax.scatter(X,Y, alpha=0.5)
-    #ellipse = Ellipse(xy=mean, width=width, height=height, angle=angle_deg, edgecolor='red', facecolor='none')
-    return outD
-
 
 #=================================
 #=================================
@@ -146,8 +115,10 @@ if __name__=="__main__":
             print(expD)
         stop2
     
-    # Apply auto-calibration unless disabled
-    doAutoCalib = not args.noAutoCalib
+    # logic for  auto-calibration
+    if expMD['payload']['num_sample']==1 and  expMD['payload']['cal_1M1']:
+        assert args.onlyCalibSamp 
+    doAutoCalib = not args.noAutoCalib  # apply it by default
     if args.verb>=1:
         print('M: auto-calibration:', 'enabled' if doAutoCalib else 'disabled')
         
@@ -165,6 +136,7 @@ if __name__=="__main__":
 
     plot=Plotter(args)
     fig0=1 if expMD['postproc']['hw_calib']=='off' else 10
+    if args.onlyCalibSamp: fig0+=20
    
     if 'a' in args.showPlots:
         plot.ehands_accuracy(expD,expMD,figId=fig0)

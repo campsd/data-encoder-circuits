@@ -7,7 +7,7 @@ echo load my NERSC-AWS creds
 #1source /Users/balewski/.ssh/nersc_aws.credentials
 #env |grep NERSC_AWS  # activate to see the creds
 
-IMG=balewski/ubu24-qiskit:p7n
+IMG=balewski/ubu24-qiskit:p7o
 
 echo launch image $IMG
 echo you are launching Podman image ...  remeber to exit

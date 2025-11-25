@@ -85,8 +85,10 @@ if __name__ == "__main__":
     outF=os.path.join(args.outPath,expMD['short_name']+'.meas.h5')
     write4_data_hdf5(expD,outF,expMD)
 
-
-    print('   ./postproc_qcrank.py   --basePath  $basePath --expName   %s   -p a    -Y\n'%(expMD['short_name']))
+    txt=''
+    if expMD['payload']['num_sample']==1 and  expMD['payload']['cal_1M1']: txt='  --onlyCalibSamp '
+  
+    print('   ./postproc_qcrank.py   --basePath  $basePath --expName   %s   -p a %s   -Y\n'%(expMD['short_name'],txt))
   
     
     

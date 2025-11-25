@@ -78,9 +78,13 @@ def summary_column(md):
     txt+='\nshots/addr : %d'%(smd['num_shots']/pmd['num_addr'])
     txt+='\nshots/img : %d k'%(smd['num_shots']/1000)
     if pmd['cal_1M1']:
-        txt+='\nnum sample %d+1'%(pmd['num_sample']-1)
+        if pom['only_calib_samp']:
+            txt+='\nonly 1 calib samp'
+        else:
+            txt+='\nnum sample %d+1'%(pmd['num_sample']-1)
     else:
         txt+='\nnum sample %d'%(pmd['num_sample'])
+
     txt+='\nsample size: %d'%(pmd['seq_len'])
     txt+='\nnum addr: %d'%pmd['num_addr']
     txt+='\nqubits: %d'%len(tmd['phys_qubits'])
@@ -152,11 +156,13 @@ class Plotter(PlotterBackbone):
         #..... right column ....
         ax = self.plt.subplot(nrow,ncol,3)
         res_data = rdata - tdata
-        h = ax.hist2d(rdata, res_data, bins=20, cmap='Blues',cmin=0.1)
-        self.plt.colorbar(h[3], ax=ax)
 
-        compute_correlation_and_draw_line(ax, rdata , res_data) 
-        ax.axhline(0.,ls='--',c='k',lw=1.0)
+        ax.scatter(rdata,res_data,alpha=0.6,s=4)
+        #1h = ax.hist2d(rdata, res_data, bins=20, cmap='Blues',cmin=0.1)
+        #1self.plt.colorbar(h[3], ax=ax)
+        
+        #compute_correlation_and_draw_line(ax, rdata , res_data) 
+        #ax.axhline(0.,ls='--',c='k',lw=1.0)
 
         ax.set_ylabel('reco-true')
         ax.set(xlabel='reco value',ylabel='reco-true')

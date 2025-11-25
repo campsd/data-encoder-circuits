@@ -52,31 +52,33 @@ def harvest_ionq_results(job,md,bigD,T0=None):  # many circuits
     #assert isinstance(job, IonQJob)
    
     pmd=md['payload']
-    qa={}
+    #pprint(pmd)
     jobRes=job.result()  # they come from backend.run, not from Sampler()
 
+    nCirc=pmd['num_sample']
     cntDL=jobRes.get_counts()
+    if nCirc>1:
+        countsL=[ cntDL[i] for i in range(nCirc) ]
+    else:
+        countsL=[ cntDL ] 
     #print(dir(jobRes))
-    qa['timestamp_running']='no qsec data'
     
-    nCirc=len(cntDL)
-    jstat=str(job.status())
-    
-    countsL=[ cntDL[i] for i in range(nCirc) ]
+    #print('ccc',cntDL)
+    #1nCirc=len(cntDL)  # gives wrong value for 1 circuits
 
+    qa={}
+    jstat=str(job.status())
+    qa['timestamp_running']='no qsec data'
     res0=jobRes.results[0]
     # collect job performance info
 
     qa['status']=jstat
     qa['num_circ']=nCirc
     qa['shots']=res0.shots
-    #qa['calib_id']=  res0._metadata['calibration_set_id']
         
     print('job QA'); pprint(qa)
     md['job_qa']=qa
     bigD['rec_udata'], bigD['rec_udata_err'] =  qcrank_reco_from_yields(countsL,pmd['nq_addr'],pmd['nq_data'])
-
-    
 
         
 #=================================
@@ -131,5 +133,7 @@ if __name__ == "__main__":
     outF=os.path.join(args.outPath,expMD['short_name']+'.meas.h5')
     write4_data_hdf5(expD,outF,expMD)
 
-
-    print('   ./postproc_qcrank.py  --basePath  $basePath  --expName   %s   -p a    -Y\n'%(expMD['short_name']))
+    txt=''
+    if expMD['payload']['num_sample']==1 and  expMD['payload']['cal_1M1']: txt='  --onlyCalibSamp '
+    
+    print('   ./postproc_qcrank.py  --basePath  $basePath  --expName   %s   -p a %s  -Y\n'%(expMD['short_name'],txt))
