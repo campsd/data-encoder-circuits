@@ -132,12 +132,11 @@ class Plotter(PlotterBackbone):
             nrow,ncol=3,1 ; xyIn=(5,10)
         fig=self.plt.figure(figId,facecolor='white', figsize=xyIn)
         
-        topTit=[ 'job: '+md['short_name'], 'Residuals',smd['backend']]
-
-        
         #....... plot data .....
         rdata=bigD['rec_udata'].flatten()
         tdata=bigD['inp_udata'].flatten()
+        res_data = rdata - tdata
+        
         #....  left column ....
         ax = self.plt.subplot(nrow,ncol,1)
            
@@ -148,36 +147,15 @@ class Plotter(PlotterBackbone):
         ax.set_xlim(xrL,xrR);ax.set_ylim(xrL,xrR)
         x12 = np.array([min(tdata), max(tdata)])
         ax.plot(x12,x12,ls='--',c='k',lw=0.7)           
-        ax.set_title(topTit[0]) 
+        ax.set_title( 'job: '+md['short_name'])
 
         txt='\nhwCal: %s:  %.2f'%(pom['hw_calib'],pom['ampl_fact'])
         ax.text(0.32, 0.21, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
-        
-        #..... right column ....
-        ax = self.plt.subplot(nrow,ncol,3)
-        res_data = rdata - tdata
 
-        ax.scatter(rdata,res_data,alpha=0.6,s=4)
-        #1h = ax.hist2d(rdata, res_data, bins=20, cmap='Blues',cmin=0.1)
-        #1self.plt.colorbar(h[3], ax=ax)
-        
-        #compute_correlation_and_draw_line(ax, rdata , res_data) 
-        #ax.axhline(0.,ls='--',c='k',lw=1.0)
-
-        ax.set_ylabel('reco-true')
-        ax.set(xlabel='reco value',ylabel='reco-true')
-        ax.set_title(topTit[1])
-
-        ax.set_xlim(xrL,xrR); ax.set_ylim(-resMX,resMX)
-        ax.grid()
-        if 'ibm' in smd['backend']: 
-            txt='phys:%s'%(tmd['phys_qubits'])
-            ax.text(0.01, 0.1, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
- 
         #..... middle column ....
         ax = self.plt.subplot(nrow,ncol,2) 
         plot_histogram(ax,  res_data)
-        ax.set_title(topTit[2])
+        ax.set_title(smd['backend'])
         xLab= 'reco-true'
         ax.set(xlabel=xLab,ylabel='num pixels')
         ax.axvline(0.,ls='--',c='k',lw=1.0)
@@ -188,6 +166,26 @@ class Plotter(PlotterBackbone):
         txt=summary_column(md)
         ax.text(0.80, 0.95, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
 
+        #..... right column ....
+        ax = self.plt.subplot(nrow,ncol,3)  
+        ax.scatter(rdata,res_data,alpha=0.6,s=4)
+        #1h = ax.hist2d(rdata, res_data, bins=20, cmap='Blues',cmin=0.1)
+        #1self.plt.colorbar(h[3], ax=ax)
+        
+        compute_correlation_and_draw_line(ax, rdata , res_data) 
+        ax.axhline(0.,ls='--',c='k',lw=1.0)
+
+        ax.set_ylabel('reco-true')
+        ax.set(xlabel='reco value',ylabel='reco-true')
+        ax.set_title('Residuals')
+
+        #ax.set_xlim(xrL,xrR); ax.set_ylim(-resMX,resMX)
+        ax.grid('true')
+        if 'ibm' in smd['backend']: 
+            txt='phys:%s'%(tmd['phys_qubits'])
+            ax.text(0.01, 0.1, txt, fontsize=10, color='m', ha='left', va='top',transform=ax.transAxes)
+ 
+      
 #...!...!..................
     def xyz(self,bigD,md,figId=3):
         #pprint(md)
