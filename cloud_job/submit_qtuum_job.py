@@ -13,12 +13,13 @@ Dependence: qpixl, qiskit
 Nexus web API: https://nexus.quantinuum.com/jobs 
 
 ???Possible backends
-['H1-1SC', 'H1-1E', 'H2-1E', 'H1-1', 'H2-1SC', 'H2-1','ideal']
+NO ['H1-1SC', 'H1-1E', 'H2-1E', 'H1-1', 'H2-1SC', 'H2-1','ideal']
 
 --backend : selects backend
 
 Use case:
- ./submit_qtuum_job.py -n 100  -E -i 2
+ ./submit_qtuum_job.py -n 10  -E -i 2   # noisy simu
+ ./submit_qtuum_job.py -n 100  -E -i 2 -b H1-1LE   # ideal simu
 
 Web portal
 https://um.qapi.quantinuum.com/user
@@ -83,7 +84,7 @@ def compile_qtuum_circuits(crefL,md):
     
     #...  compile list of circs at once
     t0=time()
-    refCL=qnx.compile( circuits=crefL, name='comp_'+md['hash'],
+    refCL=qnx.compile( programs=crefL, name='comp_'+md['hash'],
                        optimisation_level=2, backend_config=devConf1,
                        project=project )
     t1=time()
@@ -126,7 +127,7 @@ def submit_qtuum__circuits(ccrefL,devConf,md):
 #=================================
 #=================================
 if __name__ == "__main__":
-    args=commandline_parser(backName='H1-1E',provName="Qtuum_cloud")
+    args=commandline_parser(backName='H1-Emulator',provName="Qtuum_cloud")
     outPath=os.path.join(args.basePath,'jobs')
     assert os.path.exists(outPath)
     
@@ -171,7 +172,7 @@ if __name__ == "__main__":
     print('M:job starting, nCirc=%d  nq=%d  shots/circ=%d at %s  ...'%(nCirc,qcTketL[0].n_qubits,numShots,args.backend))
 
     #qnx.login_with_credentials()
-    project = qnx.projects.get_or_create(name="qcrank-feb-15")
+    project = qnx.projects.get_or_create(name="qcrank-feb-13")
     qnx.context.set_active_project(project)
    
     crefL=push_circ_to_nexus(qcTketL,expMD)

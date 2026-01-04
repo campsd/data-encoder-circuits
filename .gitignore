@@ -63,3 +63,4 @@ out
 .jupyter/
 .local/
 .ssh/
+*.swp
